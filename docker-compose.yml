@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------
+  # 1. CAPA DE DATOS (MongoDB)
+  # Base de datos NoSQL donde Spark guardará los resultados finales
+  # ----------------------------------------------------------------
+  mongodb:
+    image: mongo:6.0
+    container_name: autoinsights_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - bigdata_net
+
+  # ----------------------------------------------------------------
+  # 2. CAPA DE PROCESAMIENTO (Spark + Jupyter)
+  # Usamos una imagen "todo en uno" (Jupyter + PySpark) para desarrollo rápido.
+  # Aquí escribirás tu script ETL en la Semana 2.
+  # ----------------------------------------------------------------
+  spark-etl:
+    image: jupyter/pyspark-notebook:latest
+    container_name: autoinsights_spark
+    ports:
+      - "8888:8888" # Puerto para entrar a Jupyter Lab
+      - "4040:4040" # Puerto para ver la UI de Spark Jobs
+    environment:
+      - JUPYTER_TOKEN=bigdata # Contraseña simple para entrar
+    volumes:
+      - ./data:/home/jovyan/work/data # Mapeamos tu carpeta local de datos al contenedor
+    networks:
+      - bigdata_net
+
+  # ----------------------------------------------------------------
+  # 3. CAPA DE SERVICIO (Backend API)
+  # FastAPI que lee de MongoDB y sirve al Frontend
+  # ----------------------------------------------------------------
+  backend:
+    build: ./backend
+    container_name: autoinsights_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app # Hot-reload: Si cambias código, se actualiza solo
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+    depends_on:
+      - mongodb
+    networks:
+      - bigdata_net
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ----------------------------------------------------------------
+  # 4. CAPA DE PRESENTACIÓN (Frontend)
+  # React App
+  # ----------------------------------------------------------------
+  frontend:
+    build: ./frontend
+    container_name: autoinsights_ui
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Evita que se borren las librerías al montar el volumen
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Necesario para hot-reload en Windows/Docker
+    depends_on:
+      - backend
+    networks:
+      - bigdata_net
+    stdin_open: true # Necesario para que React no se cierre inmediatemente
+
+volumes:
+  mongo_data:
+
+
+networks:
+  bigdata_net:
+    driver: bridge
