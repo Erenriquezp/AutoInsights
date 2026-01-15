@@ -99,3 +99,31 @@ def get_analysis(brand: str, model: str):
         },
         "history": chart_data
     }
+
+    # --- ENDPOINT 4: VOLUMEN DE MERCADO POR MARCA ---
+@app.get("/api/kpi/brand-volume")
+def get_brand_volume():
+    """
+    Devuelve el volumen total de vehículos por marca
+    """
+    pipeline = [
+        {
+            "$group": {
+                "_id": "$manufacturer",
+                "total": {"$sum": "$count"}
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "brand": "$_id",
+                "total": 1
+            }
+        },
+        {
+            "$sort": {"total": -1}
+        }
+    ]
+
+    data = list(collection.aggregate(pipeline))
+    return data
