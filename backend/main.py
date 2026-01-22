@@ -127,3 +127,24 @@ def get_brand_volume():
 
     data = list(collection.aggregate(pipeline))
     return data
+
+
+    # --- ENDPOINT 5: PRECIO VS KILOMETRAJE ---
+
+@app.get("/api/mileage")
+def get_mileage(brand: str, model: str):
+    cursor = db["kilometraje"].find(
+        {
+            "manufacturer": brand,
+            "model": model
+        },
+        {"_id": 0, "odometer": 1, "price": 1}
+    ).limit(500)  # límite para performance
+
+    data = list(cursor)
+
+    if not data:
+        raise HTTPException(status_code=404, detail="No hay datos de kilometraje")
+
+    return data
+

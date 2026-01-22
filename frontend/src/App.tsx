@@ -6,12 +6,16 @@ import {
   BarChart,
   Bar,
   ComposedChart,
+  ScatterChart,
+  Scatter,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
+
+
 
 import { Car, Search, TrendingDown, DollarSign, Activity } from 'lucide-react';
 
@@ -23,6 +27,8 @@ function App() {
   const [brands, setBrands] = useState([]);
   const [models, setModels] = useState([]);
   const [brandVolume, setBrandVolume] = useState([]); //
+  const [mileageData, setMileageData] = useState([]); //
+
 
 
   const [selectedBrand, setSelectedBrand] = useState('');
@@ -84,6 +90,13 @@ function App() {
         setError("No se pudieron cargar los datos. Intenta con otro vehículo.");
         setLoading(false);
       });
+
+    axios.get(`${API_URL}/mileage`, { //
+      params: { brand: selectedBrand, model: selectedModel }
+    })
+      .then(res => setMileageData(res.data))
+      .catch(() => setMileageData([]));
+
   };
 
   // --- RENDERIZADO (HTML/JSX) ---
@@ -222,13 +235,48 @@ function App() {
                       labelFormatter={(label) => `Año: ${label}`}
                     />
 
-                    <Bar dataKey="count" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="count" fill="#38bdf8" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
 
                 <p style={{ marginTop: '1.5rem', fontStyle: 'italic', color: '#475569' }}>
                   A mayor volumen de autos analizados, mayor confiabilidad del precio promedio.
                 </p>
+              </div>
+
+              {/* FACTOR KILOMETRAJE */}
+              <div className="chart-container" style={{ height: '350px' }}>
+                <h3 className="chart-title">
+                  Factor Kilometraje
+                  <span style={{ float: 'right', fontSize: '0.8rem', color: '#94a3b8' }}>
+                    ● Cada punto = 1 vehículo
+                  </span>
+                </h3>
+
+                <p style={{ color: '#94a3b8', marginBottom: '1rem' }}>
+                  Relación Precio vs. Kilometraje – {analysisData.vehicle}
+                </p>
+
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
+
+                    <XAxis
+                      type="number"
+                      dataKey="odometer"
+                      name="Kilometraje"
+                      tickFormatter={(v) => `${v / 1000}k`}
+                    />
+                    <YAxis
+                      type="number"
+                      dataKey="price"
+                      name="Precio"
+                      tickFormatter={(v) => `$${v / 1000}k`}
+                    />
+                    <Tooltip />
+                    <Scatter data={mileageData} fill="#38bdf8" />
+                  </ScatterChart>
+
+                </ResponsiveContainer>
               </div>
 
 

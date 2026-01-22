@@ -132,13 +132,28 @@ select:focus {
   margin-top: 0.5rem;
 }
 
-.chart-container {
+/*.chart-container {
   background: var(--card-bg);
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   height: 400px;
+}*/
+
+.chart-container {
+  margin-top: 0.5rem;
+  background: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+
+  height: 380px;          /* 🔑 */
+  display: flex;          /* 🔑 */
+  flex-direction: column; /* 🔑 */
+  overflow: hidden;       /* 🔑 */
 }
+
+
 
 .chart-title {
   font-size: 1.2rem;
@@ -169,8 +184,9 @@ select:focus {
 .left-panel {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem; /* más aire visual */
 }
+
 
 /* Columna derecha */
 .right-panel {
