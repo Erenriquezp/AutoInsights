@@ -51,7 +51,7 @@ function App() {
 
       <div className="dashboard-grid">
         <div className="left-panel">
-          {error && <div style={{ color: 'red', textAlign: 'center' }}>{error}</div>}
+          {error && <div className="error-message">{error}</div>}
 
           {analysisData ? (
             <div className="results-section fade-in">
