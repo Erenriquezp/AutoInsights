@@ -1,2 +1,8 @@
 *.csv
-main.cpython-39.pyc
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
