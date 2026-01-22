@@ -1,11 +1,9 @@
-import { Car } from 'lucide-react';
-
 export const Header = () => {
   return (
     <header className="header">
       <div className="header-content">
         <h1>
-          <Car size={32} color="#ffffff" />
+          <img src="/logo/logo autoinsights.png" alt="AutoInsights Logo" className="header-logo" />
           AutoInsights <span>Big Data Analytics</span>
         </h1>
       </div>

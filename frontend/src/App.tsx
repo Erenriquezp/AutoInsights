@@ -49,27 +49,30 @@ function App() {
         onAnalyze={handleAnalyze}
       />
 
-      <div className="dashboard-grid">
-        <div className="left-panel">
-          {error && <div className="error-message">{error}</div>}
+      <div className="dashboard-content">
+        {error && <div className="error-message">{error}</div>}
 
-          {analysisData ? (
-            <div className="results-section fade-in">
-              <KPICards kpis={analysisData.kpis} />
-              <PriceChart data={analysisData.history} vehicleName={analysisData.vehicle} />
+        {/* Cards superiores: 3 KPIs + 1 Volumen */}
+        <div className="top-cards-grid">
+          {analysisData && <KPICards kpis={analysisData.kpis} />}
+          <BrandVolumeChart data={top10Brands} />
+        </div>
+
+        {/* Gráficas principales */}
+        {analysisData ? (
+          <div className="results-section fade-in">
+            <PriceChart data={analysisData.history} vehicleName={analysisData.vehicle} />
+            
+            <div className="charts-row">
               <VolumeChart data={analysisData.history} />
               <MileageChart data={mileageData} vehicleName={analysisData.vehicle} />
             </div>
-          ) : (
-            <div className="loading-spinner">
-              <p>Selecciona un vehículo arriba para ver la inteligencia de mercado.</p>
-            </div>
-          )}
-        </div>
-
-        <div className="right-panel">
-          <BrandVolumeChart data={top10Brands} />
-        </div>
+          </div>
+        ) : (
+          <div className="loading-spinner">
+            <p>Selecciona un vehículo arriba para ver la inteligencia de mercado.</p>
+          </div>
+        )}
       </div>
     </div>
   );

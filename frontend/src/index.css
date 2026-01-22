@@ -59,7 +59,7 @@ body {
   background: rgba(21, 40, 65, 0.9);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 1.25rem 0;
+  padding: 0rem 0;
   margin-bottom: 0;
   transition: all 0.3s ease;
   width: 100%;
@@ -77,8 +77,14 @@ body {
   color: white;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.2rem;
   margin: 0;
+}
+
+.header-logo {
+  height: 120px;
+  width: auto;
+  object-fit: contain;
 }
 
 .header h1 span {
@@ -247,32 +253,40 @@ select:disabled {
   justify-content: space-between;
 }
 
-/* ========== GRID DEL DASHBOARD ========== */
-.dashboard-grid {
+/* ========== CONTENIDO DEL DASHBOARD ========== */
+.dashboard-content {
   max-width: 1400px;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-  align-items: start;
   padding: 0 2rem 2rem;
-}
-
-/* ========== PANELES ========== */
-.left-panel {
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-.right-panel {
-  display: flex;
-  flex-direction: column;
+/* ========== GRID DE CARDS SUPERIORES (4 cards) ========== */
+.top-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.top-cards-grid .kpi-grid {
+  grid-column: span 3;
+  margin-bottom: 0;
+}
+
+/* ========== FILA DE GRÁFICAS ========== */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 2rem;
 }
 
 /* ========== SECCIÓN DE RESULTADOS ========== */
 .results-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
   animation: fadeIn 0.5s ease-in;
 }
 
@@ -445,8 +459,18 @@ select:disabled {
 }
 
 /* ========== RESPONSIVE ========== */
+/* ========== RESPONSIVE ========== */
 @media (max-width: 1200px) {
-  .dashboard-grid {
+  .top-cards-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .top-cards-grid .kpi-grid {
+    grid-column: span 2;
+    grid-template-columns: 1fr;
+  }
+  
+  .charts-row {
     grid-template-columns: 1fr;
   }
 }
@@ -458,11 +482,19 @@ select:disabled {
     margin: 1rem;
   }
   
+  .top-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .top-cards-grid .kpi-grid {
+    grid-column: span 1;
+  }
+  
   .kpi-grid {
     grid-template-columns: 1fr;
   }
   
-  .dashboard-grid {
+  .dashboard-content {
     padding: 0 1rem 1rem;
     gap: 1.5rem;
   }
