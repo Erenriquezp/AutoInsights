@@ -5,6 +5,11 @@ import type { MarketStats, VehicleAnalysis, MileageData, ConditionData, PriceHis
 // Asegúrate de que este puerto coincida con tu docker-compose (8000)
 const API_URL = 'http://localhost:8000/api';
 
+export interface BrandStat {
+  manufacturer: string;
+  count: number;
+}
+
 export const api = {
   // --- NUEVO: Estadísticas Globales ---
   getMarketStats: async (): Promise<MarketStats> => {
@@ -32,7 +37,7 @@ export const api = {
 
   // Análisis Específico (Depreciación)
   getAnalysis: async (brand: string, model: string): Promise<VehicleAnalysis> => {
-    const response = await axios.get<VehicleAnalysis>(`${API_URL}/analysis`, {
+    const response = await axios.get<VehicleAnalysis>(`${API_URL}/vehicles/depreciation`, {
       params: { brand, model }
     });
     return response.data;
@@ -40,7 +45,7 @@ export const api = {
 
   // Kilometraje
   getMileage: async (brand: string, model: string): Promise<MileageData[]> => {
-    const response = await axios.get<MileageData[]>(`${API_URL}/mileage`, {
+    const response = await axios.get<MileageData[]>(`${API_URL}/vehicles/mileage`, {
       params: { brand, model }
     });
     // Sanitizar datos: asegurar números y valores positivos
@@ -50,6 +55,19 @@ export const api = {
         odometer: typeof d.odometer === 'number' ? d.odometer : Number(d.odometer)
       }))
       .filter(d => Number.isFinite(d.price) && Number.isFinite(d.odometer) && d.price > 0 && d.odometer >= 0);
+  },
+
+  // NUEVO MÉTODO
+  getTopBrands: async (limit: number = 10): Promise<BrandStat[]> => {
+    try {
+      const response = await axios.get(`${API_URL}/market/brands`, {
+        params: { limit }
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching top brands", error);
+      return [];
+    }
   },
 
   // Histograma de Precios

@@ -1,10 +1,11 @@
-import { Map, BarChart4 } from 'lucide-react'; // Usaremos BarChart4 que es más "sólido"
+import { Map, BarChart4, Trophy } from 'lucide-react'; // Usaremos BarChart4 que es más "sólido"
 
 interface HeaderProps {
   onOpenMap?: () => void;
+  onOpenBrands?: () => void; // Nueva prop
 }
 
-export const Header = ({ onOpenMap }: HeaderProps) => {
+export const Header = ({ onOpenMap, onOpenBrands }: HeaderProps) => {
   return (
     <header className="header-container">
       <div className="header-content">
@@ -27,6 +28,14 @@ export const Header = ({ onOpenMap }: HeaderProps) => {
             <div className="status-dot"></div>
             <span>Spark Cluster: Online</span>
           </div>
+
+        {/* NUEVO BOTÓN: TOP BRANDS */}
+          {onOpenBrands && (
+            <button className="btn-header-action" onClick={onOpenBrands}>
+              <Trophy size={18} />
+              <span>Top Marcas</span>
+            </button>
+          )}
 
           {onOpenMap && (
             <button className="btn-header-action" onClick={onOpenMap}>

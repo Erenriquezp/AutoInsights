@@ -13,6 +13,8 @@ import VolumeChart from './components/VolumeChart'; // <--- Importante
 import { ConditionChart } from './components/ConditionChart';
 import PriceHistogram from './components/PriceHistogram';
 import USAMap from './components/USAMap';
+import { TopBrandsModal } from './components/TopBrandsModal'; // Importar el Modal
+import Footer from './components/Footer';
 
 // Services & Types
 import { api } from './services/api';
@@ -32,7 +34,7 @@ function App() {
   const [error, setError] = useState('');
 
   const [isMapOpen, setIsMapOpen] = useState(false); // Estado para abrir/cerrar mapa
-
+  const [isBrandsOpen, setIsBrandsOpen] = useState(false); // NUEVO ESTADO
   // 1. Cargar "Big Numbers" al montar
   useEffect(() => {
     const fetchGlobalStats = async () => {
@@ -79,7 +81,8 @@ function App() {
   };
 return (
     <div className="app-container">
-      <Header onOpenMap={() => setIsMapOpen(true)} />
+      <Header onOpenMap={() => setIsMapOpen(true)} 
+        onOpenBrands={() => setIsBrandsOpen(true)} />
       
       {/* 1. SECCIÓN GLOBAL (Stats + Gráficos Generales) */}
       <section className="section-global">
@@ -103,6 +106,7 @@ return (
 
         {/* El mapa es un modal, no ocupa espacio visual aquí */}
         <USAMap isOpen={isMapOpen} onClose={() => setIsMapOpen(false)} />
+        <TopBrandsModal isOpen={isBrandsOpen} onClose={() => setIsBrandsOpen(false)} />
       </section>
 
       {/* 2. ZONA DE ANÁLISIS PRINCIPAL */}
@@ -156,6 +160,8 @@ return (
           </div>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }

@@ -1,83 +1,24 @@
-import sys
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, length, avg, count, round, sum, lit, min, max, countDistinct, udf, col, lower, trim, struct, floor
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType
 import re
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import (
+    col, length, avg, count, round, min, max, 
+    countDistinct, udf, floor
+)
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType
+from typing import Dict
 
 class AutoInsightsETL:
-    """
-    Clase encargada del proceso ETL (Extract, Transform, Load).
-    Calcula KPIs granulares y estadísticas globales del mercado.
-    """
-
-    def __init__(self, input_path, mongo_uri):
-        self.input_path = input_path
-        self.mongo_uri = mongo_uri
-        self.spark = None
-
-    def create_spark_session(self):
-        print("⚡ Iniciando Spark Session...")
-        self.spark = SparkSession.builder \
-            .appName("AutoInsights_ETL_Batch") \
-            .config("spark.mongodb.input.uri", self.mongo_uri) \
-            .config("spark.mongodb.output.uri", self.mongo_uri) \
-            .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1") \
-            .getOrCreate()
-
-    def define_schema(self):
-        # Esquema manual para optimizar lectura
-        return StructType([
-            StructField("id", StringType(), True),
-            StructField("url", StringType(), True),
-            StructField("region", StringType(), True),
-            StructField("region_url", StringType(), True),
-            StructField("price", IntegerType(), True),
-            StructField("year", IntegerType(), True),
-            StructField("manufacturer", StringType(), True),
-            StructField("model", StringType(), True),
-            StructField("condition", StringType(), True),
-            StructField("cylinders", StringType(), True),
-            StructField("fuel", StringType(), True),
-            StructField("odometer", DoubleType(), True),
-            StructField("title_status", StringType(), True),
-            StructField("transmission", StringType(), True),
-            StructField("vin", StringType(), True),
-            StructField("drive", StringType(), True),
-            StructField("size", StringType(), True),
-            StructField("type", StringType(), True),
-            StructField("paint_color", StringType(), True),
-            StructField("image_url", StringType(), True),
-            StructField("description", StringType(), True),
-            # --- CORRECCIÓN: Agregamos la columna faltante AQUÍ ---
-            StructField("county", StringType(), True), 
-            # ----------------------------------------------------
-            StructField("state", StringType(), True),
-            StructField("lat", DoubleType(), True),
-            StructField("long", DoubleType(), True),
-            StructField("posting_date", StringType(), True)
-        ])
-
-    def extract(self):
-        print("📥 Leyendo dataset desde CSV...")
-        schema = self.define_schema()
-        # --- BLINDAJE NIVEL 1: Lectura Multilínea ---
-        # Esto evita que los "Enter" en la descripción rompan las filas
-        df = self.spark.read.csv(
-            self.input_path, 
-            header=True, 
-            schema=schema, 
-            multiLine=True,  # Clave para leer descripciones largas
-            escape="\"",     # Clave para comillas dentro de comillas
-            quote="\""
-        )
-        print(f"   --> Registros cargados: {df.count()}")
-        return df
-
-  # ---------------------------------------------------------
-    # 1. CATALOGO MAESTRO DE DATOS (Mini-MDM)
-    # Definimos qué modelos son válidos para las marcas principales.
-    # Esto actúa como nuestro filtro de verdad.
-    # ---------------------------------------------------------
+    """ETL optimizado para AutoInsights: Extract, Transform, Load"""
+    
+    # Constantes de validación
+    PRICE_RANGE = (500, 1000000)
+    YEAR_RANGE = (1990, 2025)
+    ODOMETER_RANGE = (0, 500000)
+    STATE_LENGTH = 2
+    PRICE_BUCKET_SIZE = 2000
+    MAX_PRICE_HISTOGRAM = 100000
+    
+    # Catálogo maestro
     KNOWN_MODELS = {
         "ford": [
             "f-150", "f150", "mustang", "explorer", "escape", "focus", "fusion", 
@@ -119,144 +60,162 @@ class AutoInsightsETL:
         "audi": ["a4", "a6", "q5", "q7", "a3", "a5", "q3", "tt"]
     }
 
-    # Modelos genéricos o correcciones directas
-    # Si encontramos la clave, la reemplazamos por el valor
     DIRECT_MAPPINGS = {
-        "4 runner": "4runner",
-        "4- runner": "4runner",
-        "4-runner": "4runner",
-        "f 150": "f-150",
-        "f150": "f-150",
-        "pkup": "pickup",
-        "super duty": "f-250", # Asunción común
-        "p/u": "pickup"
+        "4 runner": "4runner", "4- runner": "4runner", "4-runner": "4runner",
+        "f 150": "f-150", "f150": "f-150", "pkup": "pickup", 
+        "super duty": "f-250", "p/u": "pickup"
     }
 
+    # Compilar regex una sola vez
+    JUNK_WORDS = [
+        "owner", "clean", "title", "rust", "free", "new", "lift", "tires", "wheels", 
+        "door", "4wd", "awd", "4x4", "auto", "manual", "cyl", "v6", "v8", "sedan", 
+        "suv", "coupe", "convertible", "hatchback", "pickup", "truck", "van", "wagon",
+        "edition", "sport", "limited", "lx", "ex", "se", "le", "xlt", "lariat"
+    ]
+    JUNK_PATTERN = re.compile(r'\b(' + '|'.join(JUNK_WORDS) + r')\b.*')
+    ALPHANUMERIC_PATTERN = re.compile(r'[^a-z0-9\s-]')
+
+    def __init__(self, input_path: str, mongo_uri: str):
+        self.input_path = input_path
+        self.mongo_uri = mongo_uri
+        self.spark = None
+
+    def create_spark_session(self):
+        print("⚡ Iniciando Spark Session...")
+        self.spark = SparkSession.builder \
+            .appName("AutoInsights_ETL_Batch") \
+            .config("spark.mongodb.input.uri", self.mongo_uri) \
+            .config("spark.mongodb.output.uri", self.mongo_uri) \
+            .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1") \
+            .getOrCreate()
+
     @staticmethod
-    def clean_model_logic(manufacturer, raw_model):
-        """
-        Lógica pura de Python para limpiar el modelo basándose en la marca.
-        """
-        if not raw_model: 
+    def define_schema() -> StructType:
+        """Define el esquema del CSV una sola vez"""
+        fields = [
+            ("id", StringType()), ("url", StringType()), ("region", StringType()),
+            ("region_url", StringType()), ("price", IntegerType()), ("year", IntegerType()),
+            ("manufacturer", StringType()), ("model", StringType()), ("condition", StringType()),
+            ("cylinders", StringType()), ("fuel", StringType()), ("odometer", DoubleType()),
+            ("title_status", StringType()), ("transmission", StringType()), ("vin", StringType()),
+            ("drive", StringType()), ("size", StringType()), ("type", StringType()),
+            ("paint_color", StringType()), ("image_url", StringType()), ("description", StringType()),
+            ("county", StringType()), ("state", StringType()), ("lat", DoubleType()),
+            ("long", DoubleType()), ("posting_date", StringType())
+        ]
+        return StructType([StructField(name, dtype, True) for name, dtype in fields])
+
+    def extract(self):
+        """Lee CSV con esquema predefinido"""
+        print("📥 Leyendo dataset desde CSV...")
+        df = self.spark.read.csv(
+            self.input_path, 
+            header=True, 
+            schema=self.define_schema(), 
+            multiLine=True, # Clave para corregir saltos de línea en descripciones
+            escape="\"",
+            quote="\""
+        )
+        print(f"   --> Registros cargados: {df.count()}")
+        return df
+
+    @classmethod
+    def clean_model_logic(cls, manufacturer: str, raw_model: str) -> str:
+        """Lógica de limpieza optimizada"""
+        if not raw_model:
             return "unknown"
         
-        # 1. Normalización
-        manu = str(manufacturer).lower().strip() if manufacturer else ""
+        manu = (str(manufacturer).lower().strip()) if manufacturer else ""
         s = str(raw_model).lower().strip()
 
-        # 2. Correcciones Directas (Errores de dedo comunes)
-        for bad, good in AutoInsightsETL.DIRECT_MAPPINGS.items():
+        # Correcciones directas
+        for bad, good in cls.DIRECT_MAPPINGS.items():
             if bad in s:
                 s = s.replace(bad, good)
 
-        # 3. BÚSQUEDA EN CATÁLOGO (La estrategia ganadora)
-        # Si conocemos la marca, buscamos en su lista oficial
-        if manu in AutoInsightsETL.KNOWN_MODELS:
-            candidates = AutoInsightsETL.KNOWN_MODELS[manu]
-            # Buscamos si alguno de los modelos válidos está dentro del texto sucio
-            # Ordenamos candidatos por longitud (descendente) para que "grand cherokee" gane a "cherokee"
-            # Esto evita que "grand cherokee limited" se mapee solo a "cherokee"
-            candidates.sort(key=len, reverse=True) 
-            
-            for valid_model in candidates:
-                # Usamos boundary \b para evitar falsos positivos (ej: no detectar "f-150" dentro de "f-1500")
+        # Búsqueda en catálogo (ordenado por longitud)
+        if manu in cls.KNOWN_MODELS:
+            for valid_model in sorted(cls.KNOWN_MODELS[manu], key=len, reverse=True):
                 if valid_model in s:
                     return valid_model
 
-        # 4. FALLBACK (Heurística para lo que no está en el catálogo)
-        # Si llegamos aquí, es una marca rara o un modelo raro.
-        
-        # Quitamos la marca si aparece en el modelo (ej: "Toyota Camry" -> "Camry")
+        # Fallback: limpieza agresiva
         s = s.replace(manu, "").strip()
+        s = cls.JUNK_PATTERN.sub('', s)
+        s = cls.ALPHANUMERIC_PATTERN.sub('', s).strip()
         
-        # Limpieza agresiva de basura (palabras comunes en ventas)
-        junk_words = [
-            "owner", "clean", "title", "rust", "free", "new", "lift", "tires", "wheels", 
-            "door", "4wd", "awd", "4x4", "auto", "manual", "cyl", "v6", "v8", "sedan", 
-            "suv", "coupe", "convertible", "hatchback", "pickup", "truck", "van", "wagon",
-            "edition", "sport", "limited", "lx", "ex", "se", "le", "xlt", "lariat"
-        ]
-        
-        # Regex para eliminar palabras basura
-        pattern = r'\b(' + '|'.join(junk_words) + r')\b.*'
-        s = re.sub(pattern, '', s) # Corta todo desde la primera palabra basura
-        
-        # Regex para dejar solo letras, números y guiones
-        s = re.sub(r'[^a-z0-9\s-]', '', s).strip()
-        
-        # Si queda algo, tomamos las primeras 2 palabras máximo
         tokens = s.split()
-        if tokens:
-            return " ".join(tokens[:2])
-            
-        return "other"
+        return " ".join(tokens[:2]) if tokens else "other"
 
-    def transform(self, df):
-
-        print("🔍 AUTOPSIA DE DATOS: Revisando columna 'state'...")
-        
-        # TRUCO: Vamos a ver qué hay en 'state' que NO sea de 2 letras.
-        # Si la columna estuviera bien, esto debería salir vacío o con pocos errores.
-        # Si está mal (desplazada), verás pedazos de descripciones aquí.
-        df_dirty_states = df.filter(length(col("state")) > 2).select("id", "state", "price")
-        
-        print(f"⚠️ Filas con 'state' corrupto (longitud > 2): {df_dirty_states.count()}")
-        
-        print("--- MUESTRA DE DATOS CORRUPTOS ---")
-        df_dirty_states.show(20, truncate=False)
-        print("----------------------------------")
-        print("🔄 Transformando y limpiando datos (Smart Cleaning)...")
-
-        # Registramos la UDF. Nota: Recibe 2 columnas (Manufacturer y Model)
-        clean_udf = udf(AutoInsightsETL.clean_model_logic, StringType())
-
-        # Aplicamos filtro y limpieza
-        df_clean = df.filter(
-            (col("price") > 500) & 
-            (col("price") < 1000000) & 
-            (col("year") > 1990) & 
-            (col("year") <= 2025) &
+    def _add_validations(self, df):
+        """Centraliza validaciones comunes"""
+        return df.filter(
+            (col("price") > self.PRICE_RANGE[0]) & 
+            (col("price") < self.PRICE_RANGE[1]) & 
+            (col("year") > self.YEAR_RANGE[0]) & 
+            (col("year") <= self.YEAR_RANGE[1]) &
             col("manufacturer").isNotNull() &
             col("model").isNotNull()
-        ).withColumn(
-            # Pasamos STRUCT para enviar múltiples columnas a la UDF
-            "model", clean_udf(col("manufacturer"), col("model"))
         )
+
+    def _check_data_quality(self, df):
+        """Diagnóstico de calidad de datos"""
+        print("🔍 Autopsia de datos...")
+        df_dirty = df.filter(length(col("state")) > self.STATE_LENGTH)
+        count_dirty = df_dirty.count()
+        print(f"⚠️ Filas con 'state' corrupto: {count_dirty}")
+        if count_dirty > 0:
+            df_dirty.select("id", "state", "price").show(5, truncate=False)
+
+    def transform(self, df):
+        """
+        Transforma datos en una sola pasada.
+        Retorna dict con todos los dataframes calculados.
+        """
+        self._check_data_quality(df)
+        print("🔄 Transformando y limpiando datos...")
+
+        # Registrar UDF una sola vez
+        clean_udf = udf(self.clean_model_logic, StringType())
         
-        # Filtrar modelos que quedaron como vacíos o "unknown"
-        df_clean = df_clean.filter((col("model") != "") & (col("model") != "unknown"))
+        # Aplicar validaciones y limpiar modelos
+        df_clean = self._add_validations(df).withColumn(
+            "model", clean_udf(col("manufacturer"), col("model"))
+        ).filter(
+            (col("model") != "") & (col("model") != "unknown")
+        )
 
-        # --- OPTIMIZACIÓN CLAVE: CACHÉ ---
-        # Como vamos a usar df_clean para 4 cálculos distintos, lo guardamos en memoria.
-        # Esto evita que Spark vuelva a leer el CSV y vuelva a filtrar para cada KPI.
+        # Cache para reutilización (CRÍTICO)
         df_clean.cache()
-        print(f"   --> Datos limpios en caché. Total registros: {df_clean.count()}")
+        total_records = df_clean.count()
+        print(f"   --> Datos limpios en caché: {total_records} registros")
 
-        # 2. Agregación Principal (Detalle por Auto)
-        df_agg = df_clean.groupBy("manufacturer", "model", "year") \
-            .agg(
-                round(avg("price"), 2).alias("avg_price"),
-                count("*").alias("count")
-            )
+        # Diccionario con todas las transformaciones
+        results = {}
 
-        # 3. KPI Global: Precio vs Volumen por Año
-        df_price_volume = df_clean.groupBy("year") \
-            .agg(
-                round(avg("price"), 2).alias("avg_price_year"),
-                sum(lit(1)).alias("volume_year")
-            ) \
-            .orderBy("year")
+        # 1. Agregación por modelo y año (Base del análisis individual)
+        print("📊 Calculando agregaciones...")
+        results["precios_promedio"] = df_clean.groupBy("manufacturer", "model", "year").agg(
+            round(avg("price"), 2).alias("avg_price"),
+            count("*").alias("count")
+        )
 
-        # 4. Dataset Kilometraje
-        df_mileage = df_clean.select("manufacturer", "model", "odometer", "price") \
-            .filter(
-                col("odometer").isNotNull() & (col("odometer") > 0) & (col("odometer") < 500000)
-            )
+        # 2. KPI: Precio y Volumen por Año
+        results["kpi_price_volume"] = df_clean.groupBy("year").agg(
+            round(avg("price"), 2).alias("avg_price_year"),
+            count("*").alias("volume_year")
+        ).orderBy("year")
 
-        # 5. NUEVO: Estadísticas Generales del Mercado
-        # Esto genera una sola fila con el resumen total
-        print("📊 Calculando estadísticas globales del mercado...")
-        df_market_stats = df_clean.agg(
+        # 3. Datos de Kilometraje (Scatter plot)
+        results["kilometraje"] = df_clean.filter(
+            (col("odometer").isNotNull()) & 
+            (col("odometer") > self.ODOMETER_RANGE[0]) & 
+            (col("odometer") < self.ODOMETER_RANGE[1])
+        ).select("manufacturer", "model", "odometer", "price")
+
+        # 4. Estadísticas Globales
+        results["estadisticas_mercado"] = df_clean.agg(
             count("*").alias("total_vehicles"),
             countDistinct("manufacturer").alias("total_brands"),
             countDistinct("model").alias("total_models"),
@@ -267,34 +226,26 @@ class AutoInsightsETL:
             max("year").alias("newest_year")
         )
 
-        # --- NUEVO: 6. Distribución por Condición (Pastel) ---
-        print("📊 Calculando distribución por condición...")
-        df_condition = df_clean \
+        # 5. Distribución por Condición
+        results["distribucion_condicion"] = df_clean \
             .fillna("unknown", subset=["condition"]) \
             .groupBy("condition") \
             .count() \
             .orderBy("count", ascending=False)
 
-        # --- NUEVO: 7. Histograma de Precios (Distribución) ---
-        print("📊 Calculando histograma de precios...")
-        # Estrategia: Dividir precios en rangos de $2,000 para crear las barras
-        # Ejemplo: Un auto de $4,500 cae en el rango $4,000
-        df_histogram = df_clean.select("price") \
-            .withColumn("price_range", floor(col("price") / 2000) * 2000) \
+        # 6. Histograma de Precios
+        results["histograma_precios"] = df_clean.select("price") \
+            .withColumn("price_range", floor(col("price") / self.PRICE_BUCKET_SIZE) * self.PRICE_BUCKET_SIZE) \
             .groupBy("price_range") \
             .agg(count("*").alias("count")) \
             .orderBy("price_range") \
-            .filter(col("price_range") < 100000) # Filtramos exóticos extremos para que la gráfica se vea bien
+            .filter(col("price_range") < self.MAX_PRICE_HISTOGRAM)
 
-        # --- BLINDAJE NIVEL 2: Filtro de Calidad para el Mapa ---
-        # 8. NUEVO: Distribución Geográfica COMPLETA (Para el Mapa)
-        # Agrupamos por estado (ej: 'tx', 'ca', 'fl')
-        # Calculamos volumen y precio promedio
-        print("🗺️ Calculando datos geográficos...")
-        df_geo = df_clean \
+        # 7. Distribución Geográfica (Mapa)
+        results["distribucion_geo"] = df_clean \
             .filter(
                 (col("state").isNotNull()) & 
-                (length(col("state")) == 2)  # SOLO aceptamos códigos de 2 letras (ej: 'ny', 'ca')
+                (length(col("state")) == self.STATE_LENGTH)
             ) \
             .groupBy("state") \
             .agg(
@@ -302,49 +253,51 @@ class AutoInsightsETL:
                 round(avg("price"), 2).alias("avg_price")
             ) \
             .orderBy("count", ascending=False)
-            # NOTA: AQUÍ NO PONEMOS LIMIT, necesitamos todos los estados.
 
-        # Retornamos df_geo también
-        return df_agg, df_price_volume, df_mileage, df_market_stats, df_condition, df_histogram, df_geo
+        # 8. Top 10 Marcas (NUEVO - BIG DATA PURA)
+        # Calculamos el Top aquí para no cargar al backend
+        print("🏆 Calculando Top 10 Marcas...")
+        results["top_brands"] = df_clean.groupBy("manufacturer") \
+            .agg(count("*").alias("count")) \
+            .orderBy(col("count").desc()) \
+            .limit(10)
 
-    def load(self, df, collection_name, mode="overwrite"):
-        print(f"💾 Guardando colección '{collection_name}'...")
+        return results
+
+    def load(self, df, collection_name: str, mode: str = "overwrite"):
+        """Carga genérica a MongoDB"""
+        print(f"💾 Guardando '{collection_name}'...")
         try:
             df.write.format("mongo") \
                 .mode(mode) \
                 .option("database", "autoinsights") \
                 .option("collection", collection_name) \
                 .save()
-            print(f"✅ '{collection_name}' guardada.")
+            print(f"✅ '{collection_name}' guardada")
         except Exception as e:
             print(f"❌ Error en '{collection_name}': {str(e)}")
 
-    def run(self):
-        self.create_spark_session()
-        df_raw = self.extract()
-        
-        # Recibimos TODO
-        df_agg, df_price_volume, df_mileage, df_market_stats, df_condition, df_histogram, df_geo = self.transform(df_raw)
-        
-        # Cargas existentes...
-        self.load(df_agg, "precios_promedio")
-        self.load(df_price_volume, "kpi_price_volume")
-        self.load(df_mileage, "kilometraje")
-        self.load(df_market_stats, "estadisticas_mercado")
-        
-        # Cargas NUEVAS
-        self.load(df_condition, "distribucion_condicion")
-        self.load(df_histogram, "histograma_precios")
+    def load_all(self, results: Dict):
+        """Carga todos los dataframes de una vez"""
+        for collection_name, df in results.items():
+            self.load(df, collection_name)
 
-        self.load(df_geo, "distribucion_geo") # Colección para el mapa
-        
-        print("🚀 Proceso ETL Finalizado con Éxito.")
-        self.spark.stop()
+    def run(self):
+        """Ejecuta el pipeline completo"""
+        try:
+            self.create_spark_session()
+            df_raw = self.extract()
+            results = self.transform(df_raw)
+            self.load_all(results)
+            print("🚀 ETL finalizado exitosamente")
+        finally:
+            if self.spark:
+                self.spark.stop()
 
 if __name__ == "__main__":
-    # Ruta ajustada según tu docker-compose (- ./backend/data:/opt/spark/data)
-    INPUT_CSV = "/opt/spark/data/vehicles.csv" 
+    # Rutas dentro del contenedor Docker
+    INPUT_CSV = "/opt/spark/data/vehicles.csv"
     MONGO_URI = "mongodb://mongodb:27017/autoinsights"
-
+    
     job = AutoInsightsETL(INPUT_CSV, MONGO_URI)
     job.run()
