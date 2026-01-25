@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { Search, ChevronRight, Car, Tag, Loader2 } from 'lucide-react';
 import { api } from '../services/api'; // Importamos la API aquí
 
 interface VehicleSelectorProps {
@@ -56,54 +56,67 @@ export const VehicleSelector = ({ onSearch }: VehicleSelectorProps) => {
   }, [selectedBrand]);
 
   return (
-    <div className="controls-card">
-      {/* Selector de Marca */}
-      <div className="form-group">
-        <label>1. Selecciona Marca</label>
-        <div className="select-wrapper">
-          <select
-            value={selectedBrand}
-            onChange={(e) => setSelectedBrand(e.target.value)}
-            disabled={loadingBrands}
-          >
-            <option value="">{loadingBrands ? 'Cargando...' : '-- Marca --'}</option>
-            {brands.map(brand => (
-              <option key={brand} value={brand}>{brand.toUpperCase()}</option>
-            ))}
-          </select>
+<div className="selector-container-wrapper">
+      <div className="selector-card">
+        
+        {/* Paso 1: Marca */}
+        <div className="selector-group">
+          <label className="selector-label">
+            <span className="step-badge">1</span> Selecciona Marca
+          </label>
+          <div className="input-wrapper">
+            <Tag size={18} className="input-icon" />
+            <select
+              value={selectedBrand}
+              onChange={(e) => setSelectedBrand(e.target.value)}
+              disabled={loadingBrands}
+              className="custom-select"
+            >
+              <option value="">{loadingBrands ? 'Cargando...' : 'Todas las marcas'}</option>
+              {brands.map(b => <option key={b} value={b}>{b.toUpperCase()}</option>)}
+            </select>
+          </div>
         </div>
-      </div>
 
-      {/* Selector de Modelo */}
-      <div className="form-group">
-        <label>2. Selecciona Modelo</label>
-        <div className="select-wrapper">
-          <select
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            disabled={!selectedBrand || loadingModels}
-          >
-            <option value="">
-              {loadingModels ? 'Cargando modelos...' : '-- Modelo --'}
-            </option>
-            {models.map(model => (
-              <option key={model} value={model}>
-                {model.length > 25 ? model.substring(0, 25) + '...' : model}
+        {/* Separador Visual (Flecha) */}
+        <div className="selector-separator">
+          <ChevronRight size={24} color="#cbd5e1" />
+        </div>
+
+        {/* Paso 2: Modelo */}
+        <div className="selector-group">
+          <label className="selector-label">
+            <span className="step-badge">2</span> Selecciona Modelo
+          </label>
+          <div className="input-wrapper">
+            <Car size={18} className="input-icon" />
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              disabled={!selectedBrand || loadingModels}
+              className="custom-select"
+            >
+              <option value="">
+                {loadingModels ? 'Cargando modelos...' : !selectedBrand ? 'Primero selecciona marca' : 'Todos los modelos'}
               </option>
-            ))}
-          </select>
+              {models.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
         </div>
-      </div>
 
-      {/* Botón de Acción */}
-      <button
-        className="btn-analyze"
-        onClick={() => onSearch(selectedBrand, selectedModel)}
-        disabled={!selectedBrand || !selectedModel}
-      >
-        <Search size={20} /> 
-        Analizar
-      </button>
+        {/* Botón de Acción */}
+        <div className="selector-action">
+          <button
+            className="btn-analyze-hero"
+            onClick={() => onSearch(selectedBrand, selectedModel)}
+            disabled={!selectedBrand || !selectedModel}
+          >
+            {loadingModels ? <Loader2 className="spinner" /> : <Search size={20} />}
+            <span>Analizar Vehículo</span>
+          </button>
+        </div>
+
+      </div>
     </div>
   );
 };

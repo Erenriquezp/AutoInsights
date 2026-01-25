@@ -12,7 +12,6 @@ import MileageChart from './components/MileageChart';
 import VolumeChart from './components/VolumeChart'; // <--- Importante
 import { ConditionChart } from './components/ConditionChart';
 import PriceHistogram from './components/PriceHistogram';
-import { Map } from 'lucide-react';
 import USAMap from './components/USAMap';
 
 // Services & Types
@@ -78,99 +77,85 @@ function App() {
       setLoadingAnalysis(false);
     }
   };
-
-  return (
-
-    
-      
-
+return (
     <div className="app-container">
-      <Header />
+      <Header onOpenMap={() => setIsMapOpen(true)} />
       
-      {/* 1. Resumen de Mercado (Siempre visible) */}
+      {/* 1. SECCIÓN GLOBAL (Stats + Gráficos Generales) */}
       <section className="section-global">
+        {/* Big Numbers */}
         <GlobalMarketStats stats={marketStats} loading={loadingGlobal} />
-        {/* Botón Flotante o en Header para abrir Mapa */}
-        <div className="actions-bar" style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 2rem', marginTop: '-1rem' }}>
-          <button 
-            className="btn-map-trigger" 
-            onClick={() => setIsMapOpen(true)}
-          >
-            <Map size={18} />
-            Ver Mapa de Mercado
-          </button>
-        </div>
+
+        {/* Gráficos Globales (Grid de 2 columnas) */}
         <div className="global-charts-row">
           {conditionData.length > 0 && !loadingGlobal && (
-            <div className="chart-wrapper condition-chart">
+            // Agregamos chart-card para que tenga estilo unificado
+            <div className="chart-card condition-chart"> 
               <ConditionChart data={conditionData} />
             </div>
           )}
           {priceHistogram.length > 0 && !loadingGlobal && (
-            <div className="chart-wrapper price-histogram-chart">
+            <div className="chart-card price-histogram-chart">
               <PriceHistogram data={priceHistogram} />
             </div>
           )}
         </div>
-        <div>
-          
-          {/* COMPONENTE MAPA (Renderizado condicional pero controlado internamente) */}
-          <USAMap isOpen={isMapOpen} onClose={() => setIsMapOpen(false)} />
-        </div>
+
+        {/* El mapa es un modal, no ocupa espacio visual aquí */}
+        <USAMap isOpen={isMapOpen} onClose={() => setIsMapOpen(false)} />
       </section>
 
+      {/* 2. ZONA DE ANÁLISIS PRINCIPAL */}
       <main className="main-content">
-        {/* 2. Selector Inteligente */}
+        
+        {/* Selector (Con margen inferior grande definido en CSS) */}
         <div className="search-section">
             <VehicleSelector onSearch={handleSearch} />
         </div>
 
-        {/* Mensajes de carga/error */}
+        {/* Loading / Error */}
         {loadingAnalysis && (
             <div className="loading-container">
                 <div className="spinner"></div>
-                <p>Procesando Big Data...</p>
+                <p>Analizando millones de registros...</p>
             </div>
         )}
         
         {error && <div className="error-msg">{error}</div>}
 
-        {/* 3. Dashboard de Resultados */}
+        {/* DASHBOARD DE RESULTADOS */}
         {analysis && !loadingAnalysis && (
           <div className="dashboard-grid">
             
-            {/* Fila 1: KPIs Numéricos */}
+            {/* FILA 1: KPIs (Ya tiene su propio grid interno) */}
             <div className="dashboard-full-width">
                <KPICards summary={analysis.summary} vehicleName={analysis.vehicle} />
             </div>
 
-            {/* Fila 2: Gráficos Principales (Lado a Lado en pantallas grandes) */}
+            {/* FILA 2: Gráficos de Precio y Volumen */}
             <div className="charts-row">
-                {/* Curva de Precio */}
                 <div className="chart-wrapper">
-                  <h3>Curva de Depreciación</h3>
+                  {/* El título ya viene dentro del componente PriceChart si usaste mi código anterior, 
+                      si no, descomenta la línea de abajo */}
+                  {/* <h3>Curva de Depreciación</h3> */}
                   <PriceChart data={analysis.history} />
                 </div>
 
-                {/* Volumen (Confiabilidad) */}
                 <div className="chart-wrapper">
-                  <h3>Volumen de autos por año "Confiabilidad del precio"</h3>
-                   {/* Pasamos analysis.history porque contiene el 'count' por año */}
+                   {/* Igual aquí, el título idealmente va dentro del componente */}
                   <VolumeChart data={analysis.history} />
                 </div>
             </div>
 
-            {/* Fila 3: Scatter Plot (Ancho completo) */}
+            {/* FILA 3: Scatter Plot (Ancho completo) */}
             <div className="chart-wrapper full-width">
-              <h3>Análisis de Kilometraje vs Precio</h3>
+              {/* MileageChart ya tiene título interno */}
               <MileageChart data={mileageData} />
             </div>
-            
+
           </div>
-          
         )}
       </main>
-      
     </div>
   );
 }

@@ -1,12 +1,11 @@
-import { DollarSign, Activity, TrendingDown, TrendingUp } from 'lucide-react';
+import { 
+  DollarSign, 
+  Activity, 
+  TrendingDown, 
+  TrendingUp 
+} from 'lucide-react';
 
-// Definimos la interfaz parcial que necesitamos aquí
-interface KPISummary {
-  avg_price: number;
-  total_samples: number;
-  depreciation_text: string;
-  depreciation_value: number; // Nuevo campo numérico para lógica de color
-}
+import type { KPISummary } from '../types';
 
 interface KPICardsProps {
   summary: KPISummary;
@@ -14,54 +13,72 @@ interface KPICardsProps {
 }
 
 export const KPICards = ({ summary, vehicleName }: KPICardsProps) => {
-  // Lógica de color para la depreciación
-  // Si la depreciación es alta (>0), es "malo" para el valor (rojo)
-  const isHighDepreciation = summary.depreciation_value > 0;
+  // Lógica para determinar el "sentimiento" del dato
+  // Si la depreciación es > 0, el valor baja (Flecha Abajo) -> Color Naranja/Rojo
+  // Si la depreciación es < 0, el valor sube (Apreciación) -> Color Verde
+  const isDepreciating = summary.depreciation_value > 0;
   
   return (
-    <div className="kpi-grid">
-      {/* Tarjeta 1: Precio Promedio */}
+    <div className="kpi-grid-container">
+      
+      {/* TARJETA 1: PRECIO PROMEDIO (Financiero) */}
       <div className="kpi-card">
-        <div className="kpi-title">
-          <DollarSign size={16} /> Precio Promedio Histórico
+        <div className="kpi-icon-wrapper bg-green-soft">
+          <DollarSign size={24} className="text-green" />
         </div>
-        <div className="kpi-value">
-          ${summary.avg_price.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-        </div>
-        <div className="kpi-subtitle">
-          Promedio global para {vehicleName}
+        <div className="kpi-content">
+          <span className="kpi-label">Precio Promedio de Mercado</span>
+          <span className="kpi-value">
+            ${summary.avg_price.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          </span>
+          <span className="kpi-subtext">Valor medio para {vehicleName}</span>
         </div>
       </div>
 
-      {/* Tarjeta 2: Muestras */}
+      {/* TARJETA 2: VOLUMEN DE DATOS (Credibilidad) */}
       <div className="kpi-card">
-        <div className="kpi-title">
-          <Activity size={16} /> Data Points Analizados
+        <div className="kpi-icon-wrapper bg-blue-soft">
+          <Activity size={24} className="text-blue" />
         </div>
-        <div className="kpi-value">
-          {summary.total_samples.toLocaleString()}
-        </div>
-        <div className="kpi-subtitle">
-          Vehículos únicos en la base de datos
+        <div className="kpi-content">
+          <span className="kpi-label">Muestras Analizadas</span>
+          <span className="kpi-value">
+            {summary.total_samples.toLocaleString()}
+          </span>
+          <span className="kpi-subtext">Vehículos únicos en Base de Datos</span>
         </div>
       </div>
 
-      {/* Tarjeta 3: Tendencia */}
-      <div className="kpi-card" style={{ borderLeftColor: isHighDepreciation ? '#ef4444' : '#10b981' }}>
-        <div className="kpi-title">
-          {isHighDepreciation ? <TrendingDown size={16} /> : <TrendingUp size={16} />}
-          Depreciación Estimada
+      {/* TARJETA 3: DEPRECIACIÓN (La Protagonista) */}
+      {/* Le damos una clase especial 'highlight-card' */}
+      <div className={`kpi-card highlight-card ${isDepreciating ? 'trend-down' : 'trend-up'}`}>
+        <div className="kpi-header-row">
+          <div className="kpi-icon-wrapper trend-icon">
+            {isDepreciating ? <TrendingDown size={28} /> : <TrendingUp size={28} />}
+          </div>
+          <div className="badge">
+            {isDepreciating ? 'Pérdida de Valor' : 'Activo en Apreciación'}
+          </div>
         </div>
-        <div 
-          className="kpi-value" 
-          style={{ color: isHighDepreciation ? '#ef4444' : '#10b981' }}
-        >
-          {summary.depreciation_text}
-        </div>
-        <div className="kpi-subtitle">
-          Caída desde modelo más nuevo al más viejo
+        
+        <div className="kpi-content">
+          <span className="kpi-label-highlight">
+            {isDepreciating ? 'Depreciación Estimada' : 'Apreciación Histórica'}
+          </span>
+          <div className="kpi-value-row">
+            <span className="kpi-value-huge">
+              {Math.abs(summary.depreciation_value).toFixed(1)}%
+            </span>
+            <span className="kpi-unit">total</span>
+          </div>
+          <p className="kpi-explanation">
+            {isDepreciating 
+              ? 'Caída de valor desde el modelo más nuevo al más antiguo.'
+              : 'Incremento de valor por rareza o estatus de clásico.'}
+          </p>
         </div>
       </div>
+
     </div>
   );
 };

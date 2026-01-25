@@ -1,250 +1,635 @@
-/* Contenedor de Estadísticas Globales */
-.global-stats-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.25rem;
-  margin: 0 auto 2rem;
-  padding: 0 1.5rem;
-  max-width: 1400px;
+/* =========================================
+   1. VARIABLES & RESET
+   ========================================= */
+:root {
+  /* Paleta de Colores */
+  --primary: #3b82f6;       /* Blue 500 */
+  --primary-dark: #1d4ed8;  /* Blue 700 */
+  --primary-light: #eff6ff; /* Blue 50 */
+  
+  --bg-slate: #f8fafc;      /* Slate 50 - Fondo general */
+  --surface: #ffffff;       /* Blanco puro - Tarjetas */
+  
+  --text-main: #0f172a;     /* Slate 900 */
+  --text-muted: #64748b;    /* Slate 500 */
+  
+  /* Sombras Modernas */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-float: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
 }
 
-/* Fila de gráficos globales (Condition y Price Histogram) */
-.global-charts-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 1.5rem;
-  margin: 2rem auto;
-  padding: 0 1.5rem;
-  max-width: 1400px;
-}
-
-.stat-card {
-  position: relative;
-  overflow: hidden;
-  background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.12), transparent 45%),
-              radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.12), transparent 40%),
-              var(--card-bg);
-  padding: 1.5rem;
-  border-radius: 14px;
-  box-shadow: var(--shadow-sm);
-  text-align: center;
-  border: 1px solid var(--border-light);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-}
-
-.stat-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 14px;
-  border-bottom: 4px solid var(--primary-blue-light);
-  pointer-events: none;
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
-  border-color: rgba(59, 130, 246, 0.25);
-}
-
-.stat-card h3 {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-bottom: 0.35rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.stat-number {
-  font-size: 2rem;
-  font-weight: 700;
+body {
+  background-color: var(--bg-slate);
   color: var(--text-main);
   margin: 0;
-  letter-spacing: 0.01em;
-  font-feature-settings: "tnum" 1;
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Layout del Dashboard */
-.dashboard-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1.75rem;
-  margin-top: 1.5rem;
-  animation: fadeIn 0.5s ease-in;
-}
-
-/* Fila de Gráficos (Lado a Lado) */
-.charts-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
-}
-
-/* Contenedores de Gráficos */
-.chart-wrapper {
-  background: var(--card-bg);
-  padding: 1.5rem;
-  border-radius: 14px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-light);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.chart-wrapper:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-}
-
-.chart-wrapper h3 {
-  margin-top: 0;
-  color: var(--text-main);
-  font-size: 1.05rem;
-  margin-bottom: 1rem;
-}
-
-.chart-wrapper.full-width {
-  grid-column: 1 / -1;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Loading Spinner simple */
-.loading-container {
-  text-align: center;
-  padding: 2rem;
-  color: var(--primary-blue-light);
-}
-
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid var(--primary-blue-light);
-  border-radius: 50%;
-  width: 42px;
-  height: 42px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem auto;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Asegura que el contenedor de la gráfica tenga fondo y espacio */
-.chart-container {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  border: 1px solid #e2e8f0;
-  
-  /* CRUCIAL: Mínimo de altura para que Recharts pueda dibujar */
-  min-height: 350px; 
+/* =========================================
+   2. LAYOUT PRINCIPAL
+   ========================================= */
+.app-container {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* Si usas Grid en App.tsx, esto asegura que la celda tenga altura */
-.chart-wrapper {
-  min-height: 380px; 
+.main-content, 
+.section-global {
+  width: 100%;
+  max-width: 1400px; /* Evita que se estire demasiado en pantallas 4k */
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  box-sizing: border-box;
 }
 
-/* Botón del Mapa */
-.btn-map-trigger {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  color: #475569;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+.section-global {
+  padding-top: 2rem;
+  padding-bottom: 1rem;
 }
 
-.btn-map-trigger:hover {
-  background: #f8fafc;
-  color: #3b82f6;
-  border-color: #3b82f6;
+.main-content {
+  padding-bottom: 4rem;
 }
 
-/* Modal del Mapa */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(15, 23, 42, 0.6); /* Fondo oscuro semitransparente */
-  backdrop-filter: blur(4px); /* Efecto Blur moderno */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.2s;
+/* =========================================
+   3. HEADER
+   ========================================= */
+/* =========================================
+   3. HEADER PREMIUM
+   ========================================= */
+.header-container {
+  background: #0f172a; /* Slate 900 de fondo */
+  /* Un borde inferior sutil y brillante */
+  border-bottom: 1px solid rgba(59, 130, 246, 0.3); 
+  padding: 1rem 0; /* Un poco más de aire vertical */
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  /* Sombra profunda para separarlo del contenido */
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px); /* Efecto cristal si el fondo no fuera sólido */
 }
 
-.map-modal {
-  background: white;
-  width: 90%;
-  max-width: 900px;
-  height: 80vh;
-  border-radius: 16px;
-  padding: 2rem;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-.modal-header {
+.header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #94a3b8;
-  padding: 5px;
-  border-radius: 50%;
-}
-.close-btn:hover { background: #f1f5f9; color: #ef4444; }
-
-.map-container-inner {
-  flex: 1;
-  background: #f8fafc;
-  border-radius: 12px;
-  overflow: hidden;
-  position: relative;
-}
-
-.loading-map {
-  height: 100%;
+/* --- SECCIÓN DE MARCA MODERNA --- */
+.brand-section-modern {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 16px; /* Más espacio entre icono y texto */
+}
+
+/* El contenedor del icono con efecto "Glow" */
+.logo-box-glow {
+  /* Gradiente diagonal vibrante */
+  background: linear-gradient(135deg, #3b82f6, #4f46e5); 
+  width: 48px;
+  height: 48px;
+  border-radius: 14px; /* Bordes más redondeados (estilo iOS/Modern) */
+  display: flex;
   align-items: center;
   justify-content: center;
-  color: #3b82f6;
+  
+  /* EL EFECTO DE BRILLO EXTERIOR */
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset, /* Borde interior sutil */
+    0 10px 20px -5px rgba(59, 130, 246, 0.6); /* Sombra azul brillante hacia abajo */
+  
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.map-legend {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  background: white;
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  display: flex;
-  gap: 15px;
-  font-size: 0.8rem;
+/* Pequeña animación al pasar el mouse sobre el logo */
+.brand-section-modern:hover .logo-box-glow {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+    0 15px 30px -5px rgba(59, 130, 246, 0.8); /* Brillo más intenso */
 }
-.legend-item { display: flex; align-items: center; gap: 5px; }
-.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.brand-title {
+  font-size: 1.5rem;
+  font-weight: 800; /* Extra bold */
+  color: white;
+  margin: 0;
+  line-height: 1;
+  letter-spacing: -0.5px;
+  /* Un toque sutil de gradiente en el texto blanco */
+  background: linear-gradient(to right, #ffffff, #e2e8f0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.brand-subtitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8; /* Slate 400 para contraste sutil */
+  text-transform: uppercase;
+  letter-spacing: 1.5px; /* Espaciado amplio para elegancia */
+  margin-top: 4px;
+}
+
+/* --- Estilos del Título del Mapa (Corrección de Alineación) --- */
+
+.modal-title-flex {
+  display: flex;             /* Activa el modo fila */
+  align-items: center;       /* Centra verticalmente logo y texto */
+  gap: 16px;                 /* Espacio entre logo y texto */
+  margin: 0;
+  color: #0f172a;
+  line-height: 1;            /* Evita alturas de línea extrañas */
+}
+
+.header-logo {
+  height: 75px;              /* Altura fija para el logo */
+  width: auto;               /* Ancho automático para no deformar */
+  object-fit: contain;
+  display: block;            /* Evita comportamientos extraños de inline */
+}
+
+.header-logo:hover {
+  transform: scale(1.5) rotate(-3deg);
+}
+
+.title-text {
+  font-weight: 700;
+  font-size: 1.5rem;         /* Tamaño del título */
+  white-space: nowrap;       /* Opcional: Fuerza a que el texto no baje nunca */
+}
+
+/* Responsive: En móviles sí permitimos que baje si no cabe */
+@media (max-width: 600px) {
+  .modal-title-flex {
+    flex-wrap: wrap; /* En pantallas muy pequeñas, permite envolver */
+    gap: 10px;
+  }
+  .title-text {
+    white-space: normal;
+    font-size: 1.2rem;
+  }
+  .header-logo {
+    height: 36px;
+  }
+}
+
+/* --- ACCIONES A LA DERECHA (Sin cambios mayores, solo ajuste) --- */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px; /* Un poco más de separación */
+}
+
+.btn-header-action {
+  background: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.btn-header-action:hover {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+}
+
+/* =========================================
+   4. STATS GRID (Big Numbers)
+   ========================================= */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  transition: transform 0.2s, box-shadow 0.2s;
+  animation: slideDown 0.5s ease-out;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Colores utilitarios para Stats y KPIs */
+.bg-blue { background: #eff6ff; color: #3b82f6; }
+.bg-purple { background: #f3e8ff; color: #a855f7; }
+.bg-green { background: #ecfdf5; color: #10b981; }
+.bg-orange { background: #fff7ed; color: #f97316; }
+
+.border-blue { border-bottom: 3px solid #3b82f6; }
+.border-purple { border-bottom: 3px solid #a855f7; }
+.border-green { border-bottom: 3px solid #10b981; }
+.border-orange { border-bottom: 3px solid #f97316; }
+
+.stat-content { display: flex; flex-direction: column; }
+.stat-label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+.stat-value { font-size: 1.5rem; font-weight: 800; color: var(--text-main); line-height: 1.2; }
+.stat-sub { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+
+/* Skeleton */
+.stats-grid-skeleton { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+.skeleton { background: #e2e8f0; height: 100px; border-radius: 16px; animation: pulse 1.5s infinite; }
+
+/* =========================================
+   5. COMPONENTES DE GRÁFICOS (Unificados)
+   ========================================= */
+/* Unificamos .chart-card y .chart-wrapper en un solo estilo robusto */
+.chart-wrapper, 
+.chart-card {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 400px; /* Altura mínima consistente */
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* Headers de gráficas */
+.chart-wrapper h3, 
+.chart-card h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+/* Grillas de Layout para Gráficas */
+.global-charts-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr; /* 60% Precio / 40% Volumen */
+  gap: 2rem;
+  align-items: stretch;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+  min-height: 450px;
+}
+
+/* Leyendas para Pie Chart */
+.chart-content-flex { display: flex; align-items: center; height: 100%; }
+.custom-legend { flex: 1; display: flex; flex-direction: column; gap: 12px; padding-left: 10px; }
+.legend-item { display: flex; align-items: center; gap: 10px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-text { display: flex; justify-content: space-between; width: 100%; font-size: 0.85rem; }
+
+/* =========================================
+   6. VEHICLE SELECTOR (Hero)
+   ========================================= */
+.search-section {
+  margin: 0 auto 3rem auto;
+  max-width: 1000px;
+  position: relative;
+  z-index: 10;
+}
+
+.selector-card {
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 1.5rem 2rem;
+  box-shadow: var(--shadow-float);
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
+  border: 1px solid white;
+}
+
+.selector-group { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+
+.selector-label {
+  font-size: 0.85rem; font-weight: 600; color: var(--text-muted);
+  display: flex; align-items: center; gap: 8px;
+}
+
+.step-badge {
+  background: var(--primary-light); color: var(--primary);
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700;
+}
+
+.input-wrapper { position: relative; display: flex; align-items: center; }
+.input-icon { position: absolute; left: 14px; color: #94a3b8; pointer-events: none; }
+
+.custom-select {
+  width: 100%; appearance: none;
+  background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 12px 16px 12px 42px;
+  font-size: 0.95rem; color: var(--text-main);
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 1rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;
+  transition: all 0.2s;
+}
+.custom-select:hover { border-color: #cbd5e1; background-color: #fff; }
+.custom-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+
+.selector-separator { padding-bottom: 12px; }
+
+.btn-analyze-hero {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white; border: none; padding: 12px 24px; border-radius: 12px;
+  font-weight: 600; font-size: 1rem; cursor: pointer;
+  display: flex; align-items: center; gap: 10px; height: 48px;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+  transition: all 0.3s;
+}
+.btn-analyze-hero:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4); }
+.btn-analyze-hero:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
+
+/* =========================================
+   7. KPI CARDS (Dashboard Results)
+   ========================================= */
+.dashboard-grid {
+  display: flex; flex-direction: column; gap: 2.5rem;
+  animation: slideUp 0.6s ease-out;
+}
+
+.kpi-grid-container {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem; margin-bottom: 0;
+}
+
+.kpi-card {
+  background: var(--surface); border-radius: 20px; padding: 1.5rem;
+  display: flex; align-items: flex-start; gap: 1rem;
+  box-shadow: var(--shadow-sm); border: 1px solid #f1f5f9;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative; overflow: hidden;
+}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+.kpi-icon-wrapper {
+  width: 48px; height: 48px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.bg-green-soft { background: #ecfdf5; } .text-green { color: #10b981; }
+.bg-blue-soft { background: #eff6ff; } .text-blue { color: #3b82f6; }
+
+.kpi-content { display: flex; flex-direction: column; }
+.kpi-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+.kpi-value { font-size: 1.75rem; font-weight: 800; color: var(--text-main); line-height: 1.1; }
+.kpi-subtext { font-size: 0.8rem; color: #94a3b8; margin-top: 4px; }
+
+/* Tarjeta Destacada (Depreciación) */
+.highlight-card { flex-direction: column; gap: 0.5rem; border: none; }
+
+.trend-down { background: linear-gradient(135deg, #fff7ed 0%, #fff 100%); border-left: 6px solid #f97316; }
+.trend-down .trend-icon { background: #ffedd5; color: #f97316; }
+.trend-down .kpi-value-huge { color: #c2410c; }
+
+.trend-up { background: linear-gradient(135deg, #ecfdf5 0%, #fff 100%); border-left: 6px solid #10b981; }
+.trend-up .trend-icon { background: #d1fae5; color: #10b981; }
+.trend-up .kpi-value-huge { color: #047857; }
+
+.kpi-header-row { display: flex; justify-content: space-between; width: 100%; margin-bottom: 0.5rem; }
+.badge { font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; }
+.trend-down .badge { background: #ffedd5; color: #c2410c; }
+.trend-up .badge { background: #d1fae5; color: #047857; }
+
+.kpi-value-huge { font-size: 2.5rem; font-weight: 900; line-height: 1; }
+.kpi-unit { font-size: 1rem; font-weight: 600; color: #94a3b8; }
+.kpi-explanation { font-size: 0.85rem; color: var(--text-muted); margin-top: 8px; font-style: italic; }
+/* =========================================
+   8. MODALS & MAP STYLES (MEJORADO)
+   ========================================= */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.75); /* Un poco más oscuro para enfocar */
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; animation: fadeIn 0.3s ease-out;
+}
+
+.map-modal {
+  background: white; 
+  width: 95%; max-width: 1100px; /* Más ancho para acomodar el sidebar */
+  height: 85vh;
+  border-radius: 24px; 
+  padding: 2rem;
+  display: flex; flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+/* Header del Modal */
+.modal-header { 
+  display: flex; justify-content: space-between; align-items: flex-start; 
+  margin-bottom: 1.5rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 1rem;
+}
+
+/* Layout Grid: Mapa vs Sidebar */
+.map-layout-grid {
+  display: flex;
+  flex: 1;
+  gap: 2rem;
+  overflow: hidden; /* Evita scroll doble */
+}
+
+/* Área del Mapa */
+.map-visual-area {
+  flex: 3; /* Ocupa el 75% */
+  background: #f8fafc;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  position: relative;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+
+.map-legend-hint {
+  position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+  background: rgba(255,255,255,0.9); padding: 8px 16px; border-radius: 20px;
+  display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: #64748b;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.dot-light { width: 8px; height: 8px; background: #dbeafe; border-radius: 50%; }
+.dot-dark { width: 8px; height: 8px; background: #1e40af; border-radius: 50%; }
+.gradient-line { width: 40px; height: 4px; background: linear-gradient(to right, #dbeafe, #1e40af); border-radius: 2px; }
+
+/* Sidebar (Top 5) */
+.map-sidebar {
+  flex: 1; /* Ocupa el 25% */
+  display: flex; flex-direction: column;
+  min-width: 240px;
+}
+
+.sidebar-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 1rem;
+  color: #0f172a; font-weight: 700;
+}
+.text-yellow { color: #eab308; }
+
+.top-states-list {
+  flex: 1;
+  display: flex; flex-direction: column; gap: 0.75rem;
+  overflow-y: auto;
+}
+
+.state-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+.state-item:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transform: translateX(4px);
+}
+
+.state-rank {
+  width: 24px; height: 24px;
+  background: #f1f5f9; color: #64748b;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700;
+}
+.state-item:nth-child(1) .state-rank { background: #fef9c3; color: #ca8a04; } /* Oro */
+.state-item:nth-child(2) .state-rank { background: #f1f5f9; color: #475569; } /* Plata */
+.state-item:nth-child(3) .state-rank { background: #ffedd5; color: #c2410c; } /* Bronce */
+
+.state-info { flex: 1; display: flex; flex-direction: column; }
+.state-name { font-weight: 700; font-size: 0.9rem; color: #334155; }
+.state-price-sub { font-size: 0.75rem; color: #94a3b8; }
+
+.state-volume { text-align: right; }
+.vol-num { display: block; font-weight: 700; color: #3b82f6; font-size: 0.95rem; }
+
+.sidebar-footer {
+  margin-top: 1rem; padding: 1rem;
+  background: #eff6ff; border-radius: 12px;
+  font-size: 0.8rem; color: #1e40af; line-height: 1.4;
+}
+
+/* Loading */
+.full-center { display: flex; flex-direction: column; width: 100%; height: 100%; align-items: center; justify-content: center; }
+
+/* Responsive del Modal */
+@media (max-width: 768px) {
+  .map-layout-grid { flex-direction: column; }
+  .map-visual-area { height: 300px; flex: none; }
+  .map-sidebar { flex: 1; }
+}
+.close-btn { background: none; border: none; cursor: pointer; color: #94a3b8; padding: 5px; border-radius: 50%; }
+.close-btn:hover { background: #f1f5f9; color: #ef4444; }
+
+.map-container-inner { flex: 1; background: #f8fafc; border-radius: 12px; overflow: hidden; position: relative; }
+
+/* Loading & Animations */
+.loading-container { text-align: center; padding: 2rem; color: var(--primary); }
+.spinner {
+  border: 4px solid #f3f3f3; border-top: 4px solid var(--primary);
+  border-radius: 50%; width: 42px; height: 42px;
+  animation: spin 1s linear infinite; margin: 0 auto 1rem auto;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 600; /* Texto un poco más grueso */
+  
+  /* CORRECCIÓN DE COLOR */
+  color: #e2e8f0; /* Gris muy claro (casi blanco) para legibilidad */
+  
+  background: rgba(15, 23, 42, 0.6); /* Fondo oscuro semitransparente */
+  padding: 6px 12px;
+  border-radius: 999px; /* Pill shape perfecta */
+  border: 1px solid rgba(59, 130, 246, 0.2); /* Borde azul sutil */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Sombra para profundidad */
+  
+  /* Evita que se rompa en líneas */
+  white-space: nowrap;
+}
+
+/* El punto verde pulsante */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #10b981; /* Verde esmeralda brillante */
+  border-radius: 50%;
+  box-shadow: 0 0 8px #10b981; /* Glow verde */
+  animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .charts-row, .global-charts-row, .kpi-grid-container { grid-template-columns: 1fr; }
+  .selector-card { flex-direction: column; align-items: stretch; }
+  .btn-analyze-hero { width: 100%; justify-content: center; }
+  .selector-separator { display: none; }
+}

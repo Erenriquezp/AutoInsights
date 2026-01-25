@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chart } from "react-google-charts";
-import type { GoogleChartData } from '../types/mapTypes';
+// Asegúrate de importar el tipo correcto si lo tienes definido, o usa any[][]
+import type { GoogleChartData } from '../types/mapTypes'; 
 
 interface MapViewProps {
   data: GoogleChartData;
@@ -8,25 +9,38 @@ interface MapViewProps {
 
 export const MapView: React.FC<MapViewProps> = ({ data }) => {
   const options = {
-    region: "US", // Solo USA
+    region: "US",
     displayMode: "regions",
-    resolution: "provinces", // Nivel estatal
-    colorAxis: { colors: ["#dbeafe", "#1e40af"] }, // Gradiente Azul
-    backgroundColor: "#ffffff",
-    datalessRegionColor: "#f1f5f9",
+    resolution: "provinces",
+    colorAxis: { colors: ["#dbeafe", "#1e40af"] }, // Azul claro -> Azul fuerte
+    backgroundColor: "#f8fafc", // Coincide con el fondo del contenedor
+    datalessRegionColor: "#e2e8f0", // Gris suave para estados sin datos
     defaultColor: "#f5f5f5",
-    legend: { textStyle: { color: '#64748b', fontSize: 12 } },
-    tooltip: { showColorCode: true, isHtml: true, trigger: 'focus' } 
+    legend: 'none', // Ocultamos la leyenda por defecto de Google para usar la nuestra personalizada
+    tooltip: { 
+      showColorCode: true, 
+      isHtml: true, 
+      trigger: 'focus',
+      textStyle: { fontName: 'sans-serif' }
+    } 
   };
 
   return (
-    <div className="map-wrapper" style={{ width: "100%", height: "100%", minHeight: "500px", borderRadius: "12px", overflow: "hidden" }}>
+    <div className="map-wrapper" style={{ width: "100%", height: "100%", borderRadius: "16px", overflow: "hidden" }}>
       <Chart
         chartType="GeoChart"
         width="100%"
-        height="500px"
+        height="100%" // Importante: llena el contenedor padre
         data={data}
         options={options}
+        chartEvents={[
+          {
+            eventName: "ready",
+            callback: () => {
+              // Opcional: Ajustes finales al cargar
+            },
+          },
+        ]}
       />
     </div>
   );

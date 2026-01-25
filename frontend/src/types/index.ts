@@ -42,7 +42,7 @@ export interface HistoryDataPoint {
 }
 
 // 6. KPI Data
-export interface KPIData {
+export interface KPISummary {
   avg_price: number;
   total_samples: number;
   depreciation_text: string;

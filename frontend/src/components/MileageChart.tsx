@@ -1,4 +1,4 @@
-import { Gauge } from 'lucide-react'; // Icono de tacómetro/medidor
+import { Gauge, Info } from 'lucide-react'; // Icono de tacómetro/medidor
 import {
   ScatterChart,
   Scatter,
@@ -25,27 +25,31 @@ export const MileageChart = ({ data }: MileageChartProps) => {
   }
 
   return (
-    <div className="chart-container" style={{ width: '100%', height: 'auto', minHeight: '400px' }}>
-      
-      {/* --- 1. ENCABEZADO PROFESIONAL --- */}
+    <div className="chart-content" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+
+      {/* --- 1. Header con Icono y Explicación --- */}
       <div style={{ marginBottom: '1.5rem' }}>
-        <h3 className="chart-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-          Impacto del Kilometraje en el Precio
+        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          Análisis de Kilometraje vs. Precio
         </h3>
-        <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0, lineHeight: '1.4' }}>
-          <Gauge size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'text-bottom' }} />
-          Cada punto representa un vehículo real vendido.
-          <span style={{ display: 'block', marginTop: '4px', fontStyle: 'italic', fontSize: '0.8rem', color: '#94a3b8' }}>
-             Observa cómo el precio (vertical) tiende a caer a medida que aumenta el uso (horizontal).
-          </span>
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
+          <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '4px 0 0 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Gauge size={14} />
+            Distribución de mercado según el uso del vehículo
+          </p>
+          {/* Pequeña leyenda de ayuda visual */}
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', fontStyle: 'italic' }}>
+            <Info size={12} />
+            Cada punto es un vehículo vendido
+          </div>
+        </div>
       </div>
 
       {/* --- 2. GRÁFICA DE DISPERSIÓN --- */}
       <div style={{ width: '100%', height: 320 }}>
-        <ResponsiveContainer>
-          <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+        <ResponsiveContainer width="100%" height="100%">
+          <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.6} />
             
             {/* Eje X: Kilometraje */}
             <XAxis 
@@ -53,11 +57,16 @@ export const MileageChart = ({ data }: MileageChartProps) => {
               dataKey="odometer" 
               name="Kilometraje" 
               unit="km"
-              // Formato más limpio: "50k", "100k"
               tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}
-              tick={{ fill: '#64748b', fontSize: 12 }}
+              tick={{ fill: '#64748b', fontSize: 11 }}
+              dy={10}
             >
-              <Label value="Kilometraje Acumulado" offset={0} position="insideBottom" style={{ fill: '#94a3b8', fontSize: '0.8rem' }} />
+              <Label 
+                value="Kilometraje Acumulado" 
+                offset={12} 
+                position="bottom" 
+                style={{ fill: '#94a3b8', fontSize: '0.75rem', fontWeight: 500 }} 
+              />
             </XAxis>
             
             {/* Eje Y: Precio */}
@@ -67,29 +76,37 @@ export const MileageChart = ({ data }: MileageChartProps) => {
               name="Precio" 
               unit="$"
               tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-              tick={{ fill: '#64748b', fontSize: 12 }}
+              tick={{ fill: '#64748b', fontSize: 11 }}
+              axisLine={false} // Sin línea de eje
+              tickLine={false}
+              width={40}
             />
             
             {/* Tooltip oscuro y elegante */}
             <Tooltip 
-              cursor={{ strokeDasharray: '3 3' }}
+              cursor={{ strokeDasharray: '3 3', stroke: '#94a3b8', strokeWidth: 1 }}
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
-                  const data = payload[0].payload;
+                  const d = payload[0].payload;
                   return (
                     <div className="custom-tooltip" style={{ 
-                      backgroundColor: '#1e293b', 
+                      backgroundColor: '#0f172a', // Fondo casi negro
                       padding: '12px', 
                       borderRadius: '8px', 
-                      border: '1px solid #475569',
-                      boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      border: '1px solid #1e293b',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
                     }}>
-                      <p style={{ color: '#fff', margin: '0 0 4px 0', fontSize: '0.9rem' }}>
-                        Precio: <strong style={{ color: '#38bdf8' }}>${data.price.toLocaleString()}</strong>
-                      </p>
-                      <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.85rem' }}>
-                        Uso: <strong>{data.odometer.toLocaleString()} km</strong>
-                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Vehículo Detectado
+                        </span>
+                        <span style={{ color: '#fff', fontSize: '1.1rem', fontWeight: '700' }}>
+                          ${d.price.toLocaleString()}
+                        </span>
+                        <span style={{ color: '#38bdf8', fontSize: '0.9rem' }}>
+                          {d.odometer.toLocaleString()} km
+                        </span>
+                      </div>
                     </div>
                   );
                 }
@@ -101,9 +118,10 @@ export const MileageChart = ({ data }: MileageChartProps) => {
             <Scatter 
               name="Vehículos" 
               data={data} 
-              fill="#3b82f6" 
-              fillOpacity={0.5} 
-              line={false}
+              fill="#3b82f6"      // Azul vibrante (relleno)
+              fillOpacity={0.6}   // Transparencia para ver densidad
+              stroke="#2563eb"    // Borde azul más oscuro (definición)
+              strokeWidth={1}     // Borde fino
             />
           </ScatterChart>
         </ResponsiveContainer>

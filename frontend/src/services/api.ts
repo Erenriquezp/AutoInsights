@@ -43,7 +43,13 @@ export const api = {
     const response = await axios.get<MileageData[]>(`${API_URL}/mileage`, {
       params: { brand, model }
     });
-    return response.data;
+    // Sanitizar datos: asegurar números y valores positivos
+    return (response.data || [])
+      .map(d => ({
+        price: typeof d.price === 'number' ? d.price : Number(d.price),
+        odometer: typeof d.odometer === 'number' ? d.odometer : Number(d.odometer)
+      }))
+      .filter(d => Number.isFinite(d.price) && Number.isFinite(d.odometer) && d.price > 0 && d.odometer >= 0);
   },
 
   // Histograma de Precios
