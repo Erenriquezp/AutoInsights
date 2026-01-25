@@ -3,148 +3,188 @@ from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 import os
 
-app = FastAPI()
+app = FastAPI(title="AutoInsights API", version="1.0.0")
 
-# 1. Configuración de CORS
-# Permite que el Frontend (puerto 5173) hable con este Backend (puerto 8000)
+# ==========================================
+# 1. CONFIGURACIÓN E INFRAESTRUCTURA
+# ==========================================
+
+# Configuración de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción esto se restringe, para el taller "*" está bien
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 2. Conexión a MongoDB
-# Leemos la URI de las variables de entorno de Docker
+# Conexión a MongoDB
+# Usamos variables de entorno para facilitar el despliegue
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongodb:27017")
-client = MongoClient(MONGO_URI)
-db = client["autoinsights"]
-collection = db["precios_promedio"]
+
+try:
+    client = MongoClient(MONGO_URI)
+    db = client["autoinsights"]
+    
+    # Definimos las colecciones (Mapeo directo con lo que generó Spark)
+    coll_prices = db["precios_promedio"]       # Detalle por auto
+    coll_global_trend = db["kpi_price_volume"] # KPI Global Anual
+    coll_mileage = db["kilometraje"]           # Scatter Plot
+    coll_stats = db["estadisticas_mercado"]    # Resumen Ejecutivo (1 doc)
+    # Mapeo de nuevas colecciones
+    coll_condition = db["distribucion_condicion"]
+    coll_histogram = db["histograma_precios"]   
+    coll_geo = db["distribucion_geo"]
+
+    print("✅ Conexión a MongoDB exitosa.")
+except Exception as e:
+    print(f"❌ Error conectando a MongoDB: {e}")
 
 @app.get("/")
 def read_root():
-    return {"status": "API Online", "db_connected": True}
+    return {"status": "API Online", "service": "AutoInsights Backend"}
 
-# --- ENDPOINT 1: OBTENER MARCAS ---
+# ==========================================
+# 2. ENDPOINTS DE METADATA (DROPDOWNS)
+# ==========================================
+
 @app.get("/api/brands")
 def get_brands():
-    """Devuelve la lista única de marcas para el dropdown"""
-    brands = collection.distinct("manufacturer")
-    # Filtramos nulos y ordenamos
-    clean_brands = sorted([b for b in brands if b is not None])
-    return clean_brands
+    """Obtiene lista limpia de marcas."""
+    brands = coll_prices.distinct("manufacturer")
+    return sorted([b for b in brands if b])
 
-# --- ENDPOINT 2: OBTENER MODELOS POR MARCA ---
 @app.get("/api/models/{brand}")
 def get_models(brand: str):
-    """Devuelve los modelos disponibles para una marca específica"""
-    models = collection.distinct("model", {"manufacturer": brand})
-    clean_models = sorted([m for m in models if m is not None])
-    return clean_models
+    """Obtiene modelos para una marca."""
+    models = coll_prices.distinct("model", {"manufacturer": brand})
+    return sorted([m for m in models if m])
 
-# --- ENDPOINT 3: ANÁLISIS DE DATOS (EL NÚCLEO) ---
+# ==========================================
+# 3. ENDPOINTS DE DASHBOARD (KPIS GENERALES)
+# ==========================================
+
+@app.get("/api/market/stats")
+def get_market_stats():
+    """
+    Retorna los 'Big Numbers' del mercado completo.
+    Fuente: Colección 'estadisticas_mercado' (Generada por Spark)
+    """
+    stats = coll_stats.find_one({}, {"_id": 0})
+    if not stats:
+        return {
+            "total_vehicles": 0,
+            "total_brands": 0,
+            "avg_market_price": 0,
+            "year_range": "N/A"
+        }
+    return stats
+
+@app.get("/api/market/trend")
+def get_market_trend():
+    """
+    Retorna la tendencia histórica GLOBAL de precio vs volumen.
+    Fuente: Colección 'kpi_price_volume'
+    """
+    cursor = coll_global_trend.find({}, {"_id": 0}).sort("year", 1)
+    return list(cursor)
+
+# ==========================================
+# 4. ENDPOINTS DE ANÁLISIS (POR VEHÍCULO)
+# ==========================================
+
 @app.get("/api/analysis")
 def get_analysis(brand: str, model: str):
     """
-    Devuelve los datos para las gráficas:
-    - Curva de depreciación (Precio vs Año)
-    - KPIs (Precio promedio total, depreciación estimada)
+    Devuelve datos de depreciación para un vehículo específico.
+    Calcula la caída de valor desde el año más reciente al más antiguo.
     """
-    # 1. Buscar en Mongo todos los años para esa marca/modelo
-    cursor = collection.find({
-        "manufacturer": brand, 
-        "model": model
-    }).sort("year", 1) # Ordenado por año ascendente
+    # Buscamos ordenado por año
+    cursor = coll_prices.find(
+        {"manufacturer": brand, "model": model},
+        {"_id": 0}
+    ).sort("year", 1)
     
     data = list(cursor)
 
     if not data:
-        raise HTTPException(status_code=404, detail="No hay datos para este vehículo")
+        raise HTTPException(status_code=404, detail="Vehículo no encontrado")
 
-    # 2. Formatear para el Frontend
-    chart_data = []
-    total_price = 0
-    total_count = 0
+    # Cálculos en tiempo real (ligeros gracias al pre-proceso de Spark)
+    total_weighted_price = sum(d["avg_price"] * d["count"] for d in data)
+    total_count = sum(d["count"] for d in data)
+    avg_price = total_weighted_price / total_count if total_count > 0 else 0
 
-    for doc in data:
-        # Mongo devuelve ObjectId que no es serializable, lo ignoramos
-        chart_data.append({
-            "year": doc["year"],
-            "price": doc["avg_price"],
-            "count": doc["count"]
-        })
-        total_price += (doc["avg_price"] * doc["count"])
-        total_count += doc["count"]
-
-    # 3. Calcular KPIs simples
-    avg_market_price = total_price / total_count if total_count > 0 else 0
+    # Cálculo de Depreciación (Trend)
+    trend_msg = "Datos insuficientes"
+    trend_value = 0
     
-    # Cálculo simple de depreciación (Último año vs Primer año disponible)
-    # Nota: Esto es una aproximación para el demo
-    depreciation_msg = "Datos insuficientes"
-    if len(chart_data) >= 2:
-        price_new = chart_data[-1]["price"] # Año más reciente
-        price_old = chart_data[0]["price"]  # Año más antiguo
+    if len(data) >= 2:
+        # data[-1] es el año más reciente (ej. 2024), data[0] el más viejo (ej. 2000)
+        price_new = data[-1]["avg_price"]
+        price_old = data[0]["avg_price"]
+        
+        # Evitar división por cero
         if price_new > 0:
-            drop = ((price_new - price_old) / price_new) * 100
-            depreciation_msg = f"{drop:.1f}% de caída histórica"
+            # Cuánto valor perdió desde nuevo (aprox) hasta viejo
+            drop_pct = ((price_new - price_old) / price_new) * 100
+            trend_value = drop_pct
+            trend_msg = f"{drop_pct:.1f}% de depreciación histórica"
+        elif price_old > price_new:
+             # Caso raro donde el viejo es más caro (clásicos), pero manejo básico
+             trend_msg = "Apreciación de valor (Clásico)"
 
     return {
         "vehicle": f"{brand} {model}",
-        "kpis": {
-            "avg_price": round(avg_market_price, 2),
+        "summary": {
+            "avg_price": round(avg_price, 2),
             "total_samples": total_count,
-            "trend": depreciation_msg
+            "depreciation_text": trend_msg,
+            "depreciation_value": round(trend_value, 2)
         },
-        "history": chart_data
+        "history": data
     }
 
-    # --- ENDPOINT 4: VOLUMEN DE MERCADO POR MARCA ---
-@app.get("/api/kpi/brand-volume")
-def get_brand_volume():
-    """
-    Devuelve el volumen total de vehículos por marca
-    """
-    pipeline = [
-        {
-            "$group": {
-                "_id": "$manufacturer",
-                "total": {"$sum": "$count"}
-            }
-        },
-        {
-            "$project": {
-                "_id": 0,
-                "brand": "$_id",
-                "total": 1
-            }
-        },
-        {
-            "$sort": {"total": -1}
-        }
-    ]
-
-    data = list(collection.aggregate(pipeline))
-    return data
-
-
-    # --- ENDPOINT 5: PRECIO VS KILOMETRAJE ---
-
+# --- ENDPOINT 5: Kilometraje ---
 @app.get("/api/mileage")
 def get_mileage(brand: str, model: str):
-    cursor = db["kilometraje"].find(
-        {
-            "manufacturer": brand,
-            "model": model
-        },
+    """
+    Datos para Scatter Plot: Precio vs Kilometraje.
+    Limitado a 500 puntos para mantener el frontend fluido.
+    """
+    cursor = coll_mileage.find(
+        {"manufacturer": brand, "model": model},
         {"_id": 0, "odometer": 1, "price": 1}
-    ).limit(500)  # límite para performance
+    ).limit(500) # Performance limit
 
     data = list(cursor)
-
     if not data:
-        raise HTTPException(status_code=404, detail="No hay datos de kilometraje")
-
+         # Retornamos lista vacía en vez de 404 para que la gráfica simplemente se muestre vacía
+         return [] 
+    
     return data
 
+# --- ENDPOINT 6: CONDICIÓN (PASTEL) ---
+@app.get("/api/market/condition")
+def get_market_condition():
+    """Retorna la cantidad de vehículos por estado (clean, salvage, etc)"""
+    # Excluimos condiciones vacías o 'unknown' si quieres limpiar la gráfica
+    data = list(coll_condition.find(
+        {"condition": {"$nin": ["unknown", None]}}, 
+        {"_id": 0}
+    ))
+    return data
+
+# --- ENDPOINT 7: HISTOGRAMA (BARRAS) ---
+@app.get("/api/market/histogram")
+def get_price_histogram():
+    """Retorna la distribución de precios en rangos de $2k"""
+    data = list(coll_histogram.find({}, {"_id": 0}).sort("price_range", 1))
+    return data
+
+# --- ENDPOINT 7: MAPA (GEO) ---
+@app.get("/api/market/map")
+def get_geo_data():
+    """Retorna datos de todos los estados para el mapa de calor"""
+    data = list(coll_geo.find({}, {"_id": 0}))
+    return data

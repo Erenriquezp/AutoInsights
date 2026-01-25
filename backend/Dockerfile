@@ -5,7 +5,7 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Instalamos las dependencias del sistema necesarias
-RUN apt-get update && apt-get install -y gcc
+RUN apt-get update && apt-get install -y gcc && rm -rf /var/lib/apt/lists/*
 
 # Copiamos e instalamos librerías python
 # (FastAPI, Uvicorn para el servidor, PyMongo para la base de datos)

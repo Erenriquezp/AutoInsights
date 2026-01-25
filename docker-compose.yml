@@ -1,4 +1,4 @@
-version: '3.8'
+# Compose v2: 'version' is obsolete; removed to avoid warnings
 
 services:
   # ----------------------------------------------------------------
@@ -15,21 +15,44 @@ services:
     networks:
       - bigdata_net
 
+  # # ----------------------------------------------------------------
+  # # 2. CAPA DE PROCESAMIENTO (Spark + Jupyter)
+  # # Usamos una imagen "todo en uno" (Jupyter + PySpark) para desarrollo rápido.
+  # # Aquí escribirás tu script ETL en la Semana 2.
+  # # ----------------------------------------------------------------
+  # spark-etl:
+  #   image: jupyter/pyspark-notebook:latest
+  #   container_name: autoinsights_spark
+  #   ports:
+  #     - "8888:8888" # Puerto para entrar a Jupyter Lab
+  #     - "4040:4040" # Puerto para ver la UI de Spark Jobs
+  #   environment:
+  #     - JUPYTER_TOKEN=bigdata # Contraseña simple para entrar
+  #   volumes:
+  #     - ./data:/home/jovyan/work/data # Mapeamos tu carpeta local de datos al contenedor
+  #   networks:
+  #     - bigdata_net
+
   # ----------------------------------------------------------------
-  # 2. CAPA DE PROCESAMIENTO (Spark + Jupyter)
-  # Usamos una imagen "todo en uno" (Jupyter + PySpark) para desarrollo rápido.
-  # Aquí escribirás tu script ETL en la Semana 2.
+  # 2. CAPA DE PROCESAMIENTO (Spark Batch Job)
+  # Cambio: Ahora usamos una imagen dedicada que ejecuta el ETL y termina.
   # ----------------------------------------------------------------
   spark-etl:
-    image: jupyter/pyspark-notebook:latest
-    container_name: autoinsights_spark
-    ports:
-      - "8888:8888" # Puerto para entrar a Jupyter Lab
-      - "4040:4040" # Puerto para ver la UI de Spark Jobs
+    build: 
+      context: ./backend/spark
+      dockerfile: Dockerfile
+    container_name: autoinsights_etl
     environment:
-      - JUPYTER_TOKEN=bigdata # Contraseña simple para entrar
+      - SPARK_MODE=master
+      # Le decimos a Spark dónde está Mongo
+      - MONGO_URI=mongodb://mongodb:27017/autoinsights
     volumes:
-      - ./data:/home/jovyan/work/data # Mapeamos tu carpeta local de datos al contenedor
+      # Mapeamos los datos crudos (CSV) al contenedor
+      - ./backend/data:/opt/spark/data
+      # (Opcional) Mapeamos logs si quieres verlos fuera
+      - ./backend/logs:/opt/spark/logs
+    depends_on:
+      - mongodb
     networks:
       - bigdata_net
 

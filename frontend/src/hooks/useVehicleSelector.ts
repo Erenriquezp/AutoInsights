@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiService } from '../services/api';
+import { api as apiService } from '../services/api';
 
 export const useVehicleSelector = () => {
   const [brands, setBrands] = useState<string[]>([]);
@@ -17,16 +17,24 @@ export const useVehicleSelector = () => {
   // Cargar modelos cuando cambia la marca
   useEffect(() => {
     if (selectedBrand) {
-      setModels([]);
+      let isMounted = true;
       apiService.getModels(selectedBrand)
-        .then(data => setModels(data))
+        .then(data => {
+          if (isMounted) {
+            setModels(data);
+          }
+        })
         .catch(err => console.error("Error cargando modelos:", err));
+      return () => {
+        isMounted = false;
+      };
     }
   }, [selectedBrand]);
 
   const handleBrandChange = (brand: string) => {
     setSelectedBrand(brand);
     setSelectedModel('');
+    setModels([]);
   };
 
   return {

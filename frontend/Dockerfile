@@ -8,10 +8,10 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 
 # Instalamos dependencias
-# Nota: Si no existe package.json aún, esto fallará, 
-# pero es necesario para la estructura final.
-# Para la primera vez, puedes comentar esta línea o crear un package.json vacío.
 RUN npm install
+
+# Copiamos el resto del código fuente
+COPY . .
 
 # Exponemos el puerto
 EXPOSE 5173

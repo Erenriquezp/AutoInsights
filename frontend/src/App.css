@@ -1,1 +1,250 @@
-/* Estilos específicos de App están en index.css */
+/* Contenedor de Estadísticas Globales */
+.global-stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin: 0 auto 2rem;
+  padding: 0 1.5rem;
+  max-width: 1400px;
+}
+
+/* Fila de gráficos globales (Condition y Price Histogram) */
+.global-charts-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+  max-width: 1400px;
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.12), transparent 45%),
+              radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.12), transparent 40%),
+              var(--card-bg);
+  padding: 1.5rem;
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  border: 1px solid var(--border-light);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.stat-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  border-bottom: 4px solid var(--primary-blue-light);
+  pointer-events: none;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.stat-card h3 {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+  letter-spacing: 0.01em;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Layout del Dashboard */
+.dashboard-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  margin-top: 1.5rem;
+  animation: fadeIn 0.5s ease-in;
+}
+
+/* Fila de Gráficos (Lado a Lado) */
+.charts-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Contenedores de Gráficos */
+.chart-wrapper {
+  background: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.chart-wrapper:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.chart-wrapper h3 {
+  margin-top: 0;
+  color: var(--text-main);
+  font-size: 1.05rem;
+  margin-bottom: 1rem;
+}
+
+.chart-wrapper.full-width {
+  grid-column: 1 / -1;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Loading Spinner simple */
+.loading-container {
+  text-align: center;
+  padding: 2rem;
+  color: var(--primary-blue-light);
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid var(--primary-blue-light);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Asegura que el contenedor de la gráfica tenga fondo y espacio */
+.chart-container {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+  
+  /* CRUCIAL: Mínimo de altura para que Recharts pueda dibujar */
+  min-height: 350px; 
+  display: flex;
+  flex-direction: column;
+}
+
+/* Si usas Grid en App.tsx, esto asegura que la celda tenga altura */
+.chart-wrapper {
+  min-height: 380px; 
+}
+
+/* Botón del Mapa */
+.btn-map-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.btn-map-trigger:hover {
+  background: #f8fafc;
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+/* Modal del Mapa */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.6); /* Fondo oscuro semitransparente */
+  backdrop-filter: blur(4px); /* Efecto Blur moderno */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s;
+}
+
+.map-modal {
+  background: white;
+  width: 90%;
+  max-width: 900px;
+  height: 80vh;
+  border-radius: 16px;
+  padding: 2rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 5px;
+  border-radius: 50%;
+}
+.close-btn:hover { background: #f1f5f9; color: #ef4444; }
+
+.map-container-inner {
+  flex: 1;
+  background: #f8fafc;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.loading-map {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+}
+
+.map-legend {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  display: flex;
+  gap: 15px;
+  font-size: 0.8rem;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }

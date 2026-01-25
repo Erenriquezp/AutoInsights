@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { apiService } from '../services/api';
-import type { AnalysisData, MileageDataPoint } from '../types';
+import { api } from '../services/api';
+import type { VehicleAnalysis, MileageDataPoint } from '../types';
 
 export const useAnalysis = () => {
-  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
+  const [analysisData, setAnalysisData] = useState<VehicleAnalysis | null>(null);
   const [mileageData, setMileageData] = useState<MileageDataPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -17,8 +17,8 @@ export const useAnalysis = () => {
 
     try {
       const [analysis, mileage] = await Promise.all([
-        apiService.getAnalysis(brand, model),
-        apiService.getMileageData(brand, model).catch(() => [])
+        api.getAnalysis(brand, model),
+        api.getMileage(brand, model).catch(() => [])
       ]);
 
       setAnalysisData(analysis);
