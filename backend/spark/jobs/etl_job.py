@@ -85,6 +85,9 @@ class AutoInsightsETL:
         print("⚡ Iniciando Spark Session...")
         self.spark = SparkSession.builder \
             .appName("AutoInsights_ETL_Batch") \
+            .master("spark://spark-master:7077") \
+            .config("spark.driver.host", "spark-master") \
+            .config("spark.driver.bindAddress", "0.0.0.0") \
             .config("spark.mongodb.input.uri", self.mongo_uri) \
             .config("spark.mongodb.output.uri", self.mongo_uri) \
             .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1") \

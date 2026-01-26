@@ -1,9 +1,9 @@
-# Compose v2: 'version' is obsolete; removed to avoid warnings
+# docker-compose.yml
+# Versión final para demostración de escalabilidad (2 Nodos)
 
 services:
   # ----------------------------------------------------------------
   # 1. CAPA DE DATOS (MongoDB)
-  # Base de datos NoSQL donde Spark guardará los resultados finales
   # ----------------------------------------------------------------
   mongodb:
     image: mongo:6.0
@@ -15,50 +15,67 @@ services:
     networks:
       - bigdata_net
 
-  # # ----------------------------------------------------------------
-  # # 2. CAPA DE PROCESAMIENTO (Spark + Jupyter)
-  # # Usamos una imagen "todo en uno" (Jupyter + PySpark) para desarrollo rápido.
-  # # Aquí escribirás tu script ETL en la Semana 2.
-  # # ----------------------------------------------------------------
-  # spark-etl:
-  #   image: jupyter/pyspark-notebook:latest
-  #   container_name: autoinsights_spark
-  #   ports:
-  #     - "8888:8888" # Puerto para entrar a Jupyter Lab
-  #     - "4040:4040" # Puerto para ver la UI de Spark Jobs
-  #   environment:
-  #     - JUPYTER_TOKEN=bigdata # Contraseña simple para entrar
-  #   volumes:
-  #     - ./data:/home/jovyan/work/data # Mapeamos tu carpeta local de datos al contenedor
-  #   networks:
-  #     - bigdata_net
-
   # ----------------------------------------------------------------
-  # 2. CAPA DE PROCESAMIENTO (Spark Batch Job)
-  # Cambio: Ahora usamos una imagen dedicada que ejecuta el ETL y termina.
+  # 2. CLÚSTER DE PROCESAMIENTO (SPARK) (Master + 2 Workers)
+  # Aquí está la magia de la escalabilidad.
+  # Usamos 'build' para que incluya tus librerías (pymongo) definidas en el Dockerfile.
   # ----------------------------------------------------------------
-  spark-etl:
+  # 1. SPARK MASTER (El Jefe - Se mantiene vivo esperando órdenes)
+  spark-master:
     build: 
       context: ./backend/spark
       dockerfile: Dockerfile
-    container_name: autoinsights_etl
-    environment:
-      - SPARK_MODE=master
-      # Le decimos a Spark dónde está Mongo
-      - MONGO_URI=mongodb://mongodb:27017/autoinsights
+    container_name: spark-master
+    ports:
+      - "8080:8080" # Panel de Control Web
+      - "7077:7077" # Puerto Interno
     volumes:
-      # Mapeamos los datos crudos (CSV) al contenedor
-      - ./backend/data:/opt/spark/data
-      # (Opcional) Mapeamos logs si quieres verlos fuera
-      - ./backend/logs:/opt/spark/logs
-    depends_on:
-      - mongodb
+      - ./backend/data:/opt/spark/data                    # Datos
+      - ./backend/spark/jobs/etl_job.py:/app/etl_job.py   # Script ETL
     networks:
       - bigdata_net
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+
+  # 2. WORKER 1 (Empleado 1)
+  spark-worker-1:
+    build: 
+      context: ./backend/spark
+      dockerfile: Dockerfile
+    container_name: spark-worker-1
+    environment:
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+    ports:
+      - "8081:8081" # Panel Web Worker 1
+    volumes:
+      - ./backend/data:/opt/spark/data
+    depends_on:
+      - spark-master
+    networks:
+      - bigdata_net
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+
+  # 3. WORKER 2 (Empleado 2)
+  spark-worker-2:
+    build: 
+      context: ./backend/spark
+      dockerfile: Dockerfile
+    container_name: spark-worker-2
+    environment:
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+    ports:
+      - "8082:8081" # Panel Web Worker 2 (Mapeado a puerto distinto)
+    volumes:
+      - ./backend/data:/opt/spark/data
+    depends_on:
+      - spark-master
+    networks:
+      - bigdata_net
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
 
   # ----------------------------------------------------------------
   # 3. CAPA DE SERVICIO (Backend API)
-  # FastAPI que lee de MongoDB y sirve al Frontend
   # ----------------------------------------------------------------
   backend:
     build: ./backend
@@ -66,7 +83,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app # Hot-reload: Si cambias código, se actualiza solo
+      - ./backend:/app 
     environment:
       - MONGO_URI=mongodb://mongodb:27017
     depends_on:
@@ -77,7 +94,6 @@ services:
 
   # ----------------------------------------------------------------
   # 4. CAPA DE PRESENTACIÓN (Frontend)
-  # React App
   # ----------------------------------------------------------------
   frontend:
     build: ./frontend
@@ -86,18 +102,17 @@ services:
       - "5173:5173"
     volumes:
       - ./frontend:/app
-      - /app/node_modules # Evita que se borren las librerías al montar el volumen
+      - /app/node_modules
     environment:
-      - CHOKIDAR_USEPOLLING=true # Necesario para hot-reload en Windows/Docker
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
     networks:
       - bigdata_net
-    stdin_open: true # Necesario para que React no se cierre inmediatemente
+    stdin_open: true
 
 volumes:
   mongo_data:
-
 
 networks:
   bigdata_net:

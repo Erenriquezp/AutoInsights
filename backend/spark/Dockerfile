@@ -3,21 +3,12 @@ FROM apache/spark:3.5.1
 
 USER root
 
-# Instalamos dependencias de Python adicionales si las necesitas
-# (Por ahora solo pyspark viene preinstalado, agregamos requests o pandas si hiciera falta)
-# RUN pip install pandas 
+# Instalamos pip y las dependencias necesarias
+RUN apt-get update && apt-get install -y python3-pip && rm -rf /var/lib/apt/lists/*
+RUN pip install pyspark pymongo pandas
 
-# Copiamos el script ETL dentro del contenedor
-# Nota: Según tu estructura, el archivo está en backend/spark/etl_job.py
-COPY jobs/etl_job.py /opt/spark/jobs/etl_job.py
+# Creamos un enlace simbólico de python a python3
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
-# Directorio de trabajo
-WORKDIR /opt/spark/jobs
-
-# El comando por defecto al levantar el contenedor:
-# 1. Usa spark-submit
-# 2. Carga el paquete de MongoDB (--packages)
-# 3. Ejecuta tu script
-CMD ["/opt/spark/bin/spark-submit", \
-   "--packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1", \
-   "/opt/spark/jobs/etl_job.py"]
+# OJO: NO ponemos CMD ni ENTRYPOINT aquí para ejecutar el script.
+# Dejamos que la imagen base inicie el Master/Worker por defecto.
