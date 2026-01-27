@@ -18,7 +18,7 @@ class MetadataService(BaseService):
     """Gestiona dropdowns y metadatos"""
     
     @staticmethod
-    @lru_cache(maxsize=128)
+    # @lru_cache(maxsize=128) #
     def get_brands() -> List[str]:
         """Retorna marcas únicas limpias"""
         brands = db.distinct("prices", "manufacturer")

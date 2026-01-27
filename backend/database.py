@@ -97,7 +97,9 @@ class MongoDatabase:
             return [r for r in results if r is not None and r != ""]
         except Exception as e:
             print(f"❌ Error en distinct({collection}, {field}): {e}")
-            return []
+            # NO retornes lista vacía si hay error de conexión, mejor falla ruidosamente
+            # para evitar cachear datos erróneos.
+            raise e
 
 # Instancia global
 db = MongoDatabase()
