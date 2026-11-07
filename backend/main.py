@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 
+from ask.limits import RateLimited, RateLimiter
 from ask.providers import EXAMPLES, get_provider
 from ask.service import AskError, AskService
 from config import settings
@@ -148,6 +149,7 @@ class AskResponse(BaseModel):
     rows: list[list[Any]]
     chart: ChartSuggestion
     provider: str
+    model: str
 
 
 @lru_cache(maxsize=1)
@@ -157,10 +159,32 @@ def get_ask_service() -> AskService:
     )
 
 
+@lru_cache(maxsize=1)
+def get_rate_limiter() -> RateLimiter:
+    return RateLimiter(settings.ASK_PER_MINUTE, settings.ASK_PER_DAY)
+
+
+def client_address(request: Request, trust_proxy: bool) -> str:
+    """The visitor's address for rate limiting. X-Forwarded-For is only trusted behind a
+    known proxy (CloudFront); otherwise anyone could pick their own limit bucket."""
+    forwarded = request.headers.get("x-forwarded-for", "")
+    if trust_proxy and forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
 @app.post("/api/ask", tags=["Ask the data"], response_model=AskResponse)
-def ask_the_data(request: AskRequest):
+def ask_the_data(body: AskRequest, request: Request):
     """Answer a question in plain English with validated, visible SQL over the gold tables."""
-    return asdict(get_ask_service().ask(request.question))
+    try:
+        get_rate_limiter().check(client_address(request, settings.TRUST_PROXY_HEADERS))
+    except RateLimited as error:
+        return JSONResponse(
+            status_code=429,
+            content={"detail": {"code": "rate_limited", "message": str(error)}},
+            headers={"Retry-After": str(error.retry_after)},
+        )
+    return asdict(get_ask_service().ask(body.question))
 
 
 @app.get("/api/ask/examples", tags=["Ask the data"])

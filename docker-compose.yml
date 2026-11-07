@@ -82,6 +82,12 @@ services:
     environment:
       - GOLD_PATH=/app/data/gold
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:4173}
+      # "Ask the data": keys come from .env (git-ignored); without them the offline demo answers
+      - LLM_PROVIDER=${LLM_PROVIDER:-fallback}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GROQ_MODEL=${GROQ_MODEL:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-}
     networks:
       - bigdata_net
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload

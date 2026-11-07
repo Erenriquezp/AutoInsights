@@ -31,9 +31,14 @@ class Settings:
     EXCLUDE_EMPTY_VALUES: tuple[str | None, ...] = ("unknown", None, "")
 
     # "Ask the data"
-    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "fake")  # fake (offline) | groq | gemini
+    # fallback: Groq, then Gemini, for whichever keys are set (offline FakeProvider if none)
+    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "fallback")  # fallback | groq | gemini | fake
     ASK_TIMEOUT_SECONDS: float = float(os.getenv("ASK_TIMEOUT_SECONDS", "3"))
     QUESTION_MAX_LENGTH: int = 300
+    ASK_PER_MINUTE: int = int(os.getenv("ASK_PER_MINUTE", "6"))  # per client address
+    ASK_PER_DAY: int = int(os.getenv("ASK_PER_DAY", "500"))  # all clients, per UTC day
+    # Behind CloudFront the client address comes from X-Forwarded-For; locally it must not
+    TRUST_PROXY_HEADERS: bool = os.getenv("TRUST_PROXY_HEADERS", "false").lower() == "true"
 
 
 settings = Settings()

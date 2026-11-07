@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 import main
 from ask.guard import MAX_ROWS
 from ask.prompt import build_prompt, schema_text
-from ask.providers import EXAMPLES, FakeProvider, ProviderError, get_provider
+from ask.providers import EXAMPLES, FakeProvider, ProviderError, ProviderReply, get_provider
 from ask.service import AskService, Chart, suggest_chart
 from gold_fixtures import write_gold
 from repository import GoldRepository, QueryFailed, QueryTimeout
@@ -41,7 +41,7 @@ class ScriptedProvider:
 
     def generate_sql(self, question: str, prompt: str) -> str:
         self.prompts.append(prompt)
-        return self.reply
+        return ProviderReply(self.reply, self.name, "scripted-model", 100, 10)
 
 
 @pytest.fixture(scope="module")
@@ -189,7 +189,7 @@ def test_build_prompt_wraps_the_question():
 def test_fake_provider_matches_questions_loosely():
     reply = FakeProvider().generate_sql("WHICH brands have the most listings", "prompt")
 
-    assert reply.startswith("```sql\nSELECT manufacturer")
+    assert reply.text.startswith("```sql\nSELECT manufacturer")
 
 
 def test_fake_provider_unknown_question():
@@ -272,3 +272,54 @@ def test_default_service_uses_the_configured_provider(monkeypatch, repository):
 
     assert response.status_code == 200
     assert response.json()["provider"] == "fake"
+
+
+def test_questions_are_rate_limited_per_client(monkeypatch, repository):
+    from ask.limits import RateLimiter
+
+    limiter = RateLimiter(per_minute=2, per_day=100)
+    monkeypatch.setattr(main, "get_rate_limiter", lambda: limiter)
+    client = client_with(monkeypatch, repository, FakeProvider())
+
+    codes = [ask(client, "Which brands have the most listings?").status_code for _ in range(3)]
+    blocked = ask(client, "Which brands have the most listings?")
+
+    assert codes == [200, 200, 429]
+    assert blocked.json()["detail"]["code"] == "rate_limited"
+    assert int(blocked.headers["Retry-After"]) > 0
+
+
+def test_answer_names_the_model(monkeypatch, repository):
+    client = client_with(monkeypatch, repository, ScriptedProvider("SELECT * FROM top_brands"))
+
+    body = ask(client, "anything").json()
+
+    assert (body["provider"], body["model"]) == ("scripted", "scripted-model")
+
+
+def test_saturated_provider_is_reported_as_busy(monkeypatch, repository):
+    class Busy:
+        name = "groq"
+
+        def generate_sql(self, question, prompt):
+            raise ProviderError("Groq rate limit reached", "rate_limited")
+
+    response = ask(client_with(monkeypatch, repository, Busy()), "anything")
+
+    assert response.status_code == 503
+    assert response.json()["detail"]["code"] == "provider_busy"
+
+
+def test_client_address_ignores_forwarded_headers_unless_trusted(monkeypatch):
+    from types import SimpleNamespace
+
+    request = SimpleNamespace(
+        client=SimpleNamespace(host="10.0.0.1"), headers={"x-forwarded-for": "1.2.3.4, 10.0.0.1"}
+    )
+
+    assert main.client_address(request, trust_proxy=False) == "10.0.0.1"
+    assert main.client_address(request, trust_proxy=True) == "1.2.3.4"
+    assert (
+        main.client_address(SimpleNamespace(client=None, headers={}), trust_proxy=False)
+        == "unknown"
+    )

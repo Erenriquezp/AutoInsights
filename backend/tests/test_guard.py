@@ -145,6 +145,9 @@ def test_rejection_message_is_safe_to_show():
         ("```sql\nSELECT * FROM top_brands\n```", "SELECT * FROM top_brands"),
         ("Here you go:\n```\nSELECT 1\n```\nHope it helps", "SELECT 1"),
         ("  \n SELECT 2 \n ", "SELECT 2"),
+        ("```sql\nSELECT 3 FROM top_brands", "SELECT 3 FROM top_brands"),  # fence never closed
+        ("```SQL\nSELECT 4\n```", "SELECT 4"),
+        ("```sql\nsql\nSELECT 5\n```", "SELECT 5"),  # a stray language line inside the block
     ],
 )
 def test_extract_sql(reply, expected):

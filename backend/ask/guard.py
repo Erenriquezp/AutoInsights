@@ -46,7 +46,8 @@ ALLOWED_ANONYMOUS_FUNCTIONS = frozenset(
 # SQL (COUNT, SUM, ROUND, CASE, CAST...), so they are allowed unless listed here.
 FORBIDDEN_FUNCTION_CLASSES: tuple[type[exp.Expression], ...] = (exp.ReadCSV,)
 
-_CODE_FENCE = re.compile(r"```(?:sql)?\s*(.*?)```", re.IGNORECASE | re.DOTALL)
+# A fenced block, closed or not (a reply cut short still carries its SQL)
+_CODE_FENCE = re.compile(r"```(?:sql)?\s*(.*?)(?:```|\Z)", re.IGNORECASE | re.DOTALL)
 
 
 class SqlRejected(ValueError):
@@ -60,7 +61,9 @@ class SqlRejected(ValueError):
 def extract_sql(reply: str) -> str:
     """The SQL inside a model reply: the first fenced block if there is one, else the text."""
     match = _CODE_FENCE.search(reply)
-    return (match.group(1) if match else reply).strip()
+    text = (match.group(1) if match else reply).strip()
+    # some models repeat the language name on its own line inside the block
+    return re.sub(r"^sql\s*\n", "", text, flags=re.IGNORECASE).strip()
 
 
 def validate_sql(sql: str) -> str:
