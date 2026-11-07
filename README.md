@@ -1,5 +1,7 @@
 # AutoInsights
 
+[![CI](https://github.com/Erenriquezp/AutoInsights/actions/workflows/ci.yml/badge.svg?branch=release%2Fv2-cloud-platform)](https://github.com/Erenriquezp/AutoInsights/actions/workflows/ci.yml)
+
 **Used-car market analytics at scale.** A distributed Apache Spark ETL cleans and aggregates 420K+ used-car listings into MongoDB, a FastAPI service exposes the results, and a React dashboard turns them into price, depreciation, mileage and geographic insights.
 
 > Academic team project (Big Data course, Universidad Central del Ecuador, 2026).
