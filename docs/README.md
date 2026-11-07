@@ -3,6 +3,7 @@
 | Document | What it covers |
 |---|---|
 | [Architecture](architecture.md) | How v1 is built and the v2 target on AWS |
+| [Data model](data-model.md) | Gold tables: columns, cleaning rules, how to regenerate |
 | [ADRs](adr/) | Architecture decision records: context, decision, alternatives, consequences |
 
 Coming with v2:
