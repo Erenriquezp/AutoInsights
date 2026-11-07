@@ -64,17 +64,25 @@ it is interrupted.
 | **LLM07 System prompt leakage** | A visitor extracts the prompt | The prompt holds no secrets, only the public schema and rules, so leaking it does no harm |
 | **LLM08 Vector and embedding weaknesses** | — | Not applicable: no retrieval or embeddings |
 | **LLM09 Misinformation** | A wrong query gives a confident wrong answer | The SQL is always shown next to the result. Accuracy is measured with a 30-question evaluation set |
-| **LLM10 Unbounded consumption** | Floods exhaust the free LLM tier or the API | Questions limited to 300 characters, results to 100 rows, queries to 3 seconds. Per-IP and daily limits and a token cap come with the hosted providers |
+| **LLM10 Unbounded consumption** | Floods exhaust the free LLM tier or the API | Questions limited to 300 characters, results to 100 rows, queries to 3 seconds. At most 6 questions per visitor per minute and 500 per day in total (429 with `Retry-After`), and a cap on the model's output tokens. When Groq's free tier is saturated, Gemini answers instead |
 
 ## Logging
 
-Each question is logged with its provider, outcome (`ok`, `rejected_<reason>`,
-`provider_unavailable`, `query_timeout`, `query_failed`), length and latency. The question
-text itself is not logged.
+Each question is logged with the provider and model that answered, the outcome (`ok`,
+`rejected_<reason>`, `provider_busy`, `provider_unavailable`, `query_timeout`, `query_failed`),
+its length, the input and output tokens and the latency. The question text itself is not
+logged. API keys live in `.env` (git-ignored) locally and in SSM Parameter Store in the cloud;
+they are sent to the providers in headers, never in URLs, and never logged.
+
+The client address used for the per-visitor limit comes from `X-Forwarded-For` only when
+`TRUST_PROXY_HEADERS=true` (behind CloudFront); otherwise a visitor could choose their own
+limit bucket.
 
 ## Web application basics
 
 - CORS allows only configured origins and `GET`/`POST`, without credentials.
+- The UI tells visitors that questions are sent to a third-party model and to leave out
+  personal data (free-tier terms may let the provider use prompts).
 - Error responses never include stack traces or internal details.
 - No cookies, sessions or user data.
 
