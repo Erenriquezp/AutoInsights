@@ -13,7 +13,7 @@
 - **Distributed processing:** Spark 3.5 cluster (1 master + 2 workers) running in Docker Compose.
 - **Data quality first:** explicit schema, multi-line CSV parsing, range validation and model-name normalization. **426,880 raw listings → 354,649 clean records.**
 - **Pre-aggregated serving layer:** the ETL writes 8 gold tables as Parquet (2.9 MB), loaded into an in-memory DuckDB by the API, with no database server to run. See the [data model](docs/data-model.md).
-- **Typed dashboard:** React 19 + TypeScript with Recharts and Google Charts: KPIs, price trend, depreciation by model, price vs. mileage, condition mix, price histogram, US heat map and top brands.
+- **Dashboard:** React 19 + TypeScript with a collapsible side menu, English and Spanish, shareable vehicle links and a self-contained US tile map. Pages: market overview, vehicle analysis (price by model year, five-year value change, price vs. mileage), geography, Ask the data and about. Every chart can be shown as a table.
 
 ## Architecture
 
@@ -33,7 +33,7 @@ flowchart LR
 | Processing | Apache Spark 3.5 (PySpark) | `backend/spark/jobs/` |
 | Storage | Parquet gold tables | `backend/data/gold/` (generated) |
 | API | FastAPI, DuckDB | `backend/main.py`, `backend/services.py`, `backend/repository.py` |
-| Frontend | React 19, TypeScript, Vite, Recharts, Google Charts | `frontend/` |
+| Frontend | React 19, TypeScript, Vite, React Router, Recharts, Vitest | `frontend/` |
 | Exploration | Jupyter + PySpark | `backend/notebooks/ETL_Process.ipynb` |
 
 ## Data pipeline

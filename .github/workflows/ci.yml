@@ -46,7 +46,7 @@ jobs:
         run: coverage report --include="ask/guard.py" --fail-under=100
 
   frontend:
-    name: Frontend (lint, type-check, build)
+    name: Frontend (lint, tests, type-check, build)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -66,6 +66,9 @@ jobs:
 
       - name: ESLint
         run: npm run lint
+
+      - name: Unit tests
+        run: npm test
 
       - name: Type-check and build
         run: npm run build
