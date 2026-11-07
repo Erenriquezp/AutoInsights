@@ -1,0 +1,14 @@
+# Test configuration for the Spark ETL. Lint and format rules come from backend/pyproject.toml.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["jobs"]
+addopts = "-ra --cov=jobs --cov-report=term-missing"
+
+[tool.coverage.run]
+branch = true
+omit = ["jobs/etl_job.py"] # I/O orchestration, exercised by the real ETL run
+
+[tool.coverage.report]
+fail_under = 70
+show_missing = true

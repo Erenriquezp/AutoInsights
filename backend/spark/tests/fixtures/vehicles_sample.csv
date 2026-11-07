@@ -1,0 +1,6 @@
+id,url,region,region_url,price,year,manufacturer,model,condition,cylinders,fuel,odometer,title_status,transmission,vin,drive,size,type,paint_color,image_url,description,county,state,lat,long,posting_date
+1,https://example.org/1,auburn,https://auburn.example.org,15000,2015,toyota,camry le,good,4 cylinders,gas,80000,clean,automatic,VIN1,fwd,mid-size,sedan,white,https://example.org/1.jpg,One owner car,,al,32.59,-85.48,2021-05-04T12:31:18-0500
+2,https://example.org/2,auburn,https://auburn.example.org,8500,2009,ford,"f-150 xlt, ""lifted""",fair,8 cylinders,gas,150000,clean,automatic,VIN2,4wd,full-size,truck,blue,https://example.org/2.jpg,"Runs great.
+Second line of the description.
+Third line, with a comma.",,al,32.59,-85.48,2021-05-03T14:02:03-0500
+3,https://example.org/3,boston,https://boston.example.org,4200,2004,honda,civic ex,,4 cylinders,gas,120000,clean,manual,VIN3,fwd,compact,sedan,silver,https://example.org/3.jpg,Needs tires,,ma,42.36,-71.06,2021-05-02T09:15:00-0500

@@ -2,6 +2,7 @@
 #
 #   docker compose up -d --build                  # development (Vite dev server on :5173)
 #   docker compose --profile prod up -d --build   # adds the production build on :4173
+#   docker compose run --rm spark-tests           # ETL tests inside the Spark image
 #
 # Ports are bound to 127.0.0.1 so nothing is exposed to the local network.
 # Optional overrides go in .env (see .env.example).
@@ -27,13 +28,14 @@ services:
   spark-master:
     build:
       context: ./backend/spark
+      target: runtime
     container_name: spark-master
     ports:
       - "127.0.0.1:8080:8080" # master web UI
       - "127.0.0.1:7077:7077" # cluster port
     volumes:
       - ./backend/data:/opt/spark/data
-      - ./backend/spark/jobs/etl_job.py:/app/etl_job.py
+      - ./backend/spark/jobs:/app # ETL code: etl_job.py, transforms.py, normalize.py
     networks:
       - bigdata_net
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
@@ -41,6 +43,7 @@ services:
   spark-worker-1:
     build:
       context: ./backend/spark
+      target: runtime
     container_name: spark-worker-1
     environment:
       - SPARK_WORKER_MEMORY=1G
@@ -58,6 +61,7 @@ services:
   spark-worker-2:
     build:
       context: ./backend/spark
+      target: runtime
     container_name: spark-worker-2
     environment:
       - SPARK_WORKER_MEMORY=1G
@@ -71,6 +75,16 @@ services:
     networks:
       - bigdata_net
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+
+  # ETL tests on the same Spark and Python versions: docker compose run --rm spark-tests
+  spark-tests:
+    profiles: ["test"]
+    build:
+      context: ./backend/spark
+      target: test
+    volumes:
+      - ./backend/spark/jobs:/work/jobs
+      - ./backend/spark/tests:/work/tests
 
   # ---------------------------------------------------------------- API
   backend:

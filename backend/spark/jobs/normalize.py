@@ -1,0 +1,123 @@
+"""Model-name normalization. Pure Python, no Spark: runs inside a UDF on the workers."""
+
+import re
+
+# Model catalog per brand. A listing whose model text contains one of these names is mapped to it.
+# fmt: off
+KNOWN_MODELS: dict[str, list[str]] = {
+    "ford": [
+        "f-150", "f150", "mustang", "explorer", "escape", "focus", "fusion",
+        "ranger", "edge", "expedition", "taurus", "fiesta", "flex", "bronco",
+        "f-250", "f250", "f-350", "f-450", "f-550", "transit", "econoline", "excursion"
+    ],
+    "chevrolet": [
+        "silverado", "malibu", "equinox", "cruze", "impala", "tahoe", "suburban",
+        "corvette", "camaro", "colorado", "traverse", "blazer", "trax", "aveo",
+        "spark", "sonic", "bolt", "volt", "avalanche", "express"
+    ],
+    "toyota": [
+        "camry", "corolla", "rav4", "tacoma", "tundra", "4runner", "highlander",
+        "sienna", "prius", "avalon", "yaris", "sequoia", "venza", "c-hr", "supra",
+        "land cruiser", "matrix", "celica", "echo", "fj cruiser"
+    ],
+    "honda": [
+        "civic", "accord", "cr-v", "pilot", "odyssey", "fit", "hr-v", "ridgeline",
+        "insight", "passport", "element", "crosstour", "prelude", "s2000"
+    ],
+    "nissan": [
+        "altima", "sentra", "rogue", "maxima", "pathfinder", "murano", "verso",
+        "frontier", "titan", "armada", "leaf", "juk", "kicks", "nv200", "quest",
+        "350z", "370z", "gt-r"
+    ],
+    "jeep": [
+        "wrangler", "grand cherokee", "cherokee", "compass", "renegade", "liberty",
+        "patriot", "gladiator", "commander", "wagoneer"
+    ],
+    "ram": ["1500", "2500", "3500", "promaster", "dakota"],
+    "gmc": ["sierra", "acadia", "terrain", "yukon", "canyon", "envoy", "savana"],
+    "subaru": ["outback", "forester", "impreza", "legacy", "crosstrek", "wrx", "brz", "ascent"],
+    "dodge": [
+        "charger", "challenger", "durango", "journey", "grand caravan", "dart", "avenger", "ram"
+    ],
+    "bmw": [
+        "3 series", "5 series", "x3", "x5", "328i", "335i", "528i", "535i", "m3", "m5", "x1",
+        "7 series"
+    ],
+    "mercedes-benz": ["c-class", "e-class", "s-class", "glc", "gle", "cla", "g-class", "sprinter"],
+    "hyundai": [
+        "elantra", "sonata", "tucson", "santa fe", "accent", "veloster", "kona", "palisade"
+    ],
+    "kia": ["optima", "sorento", "soul", "sportage", "forte", "rio", "stinger", "telluride"],
+    "volkswagen": ["jetta", "passat", "tiguan", "golf", "beetle", "atlas", "cc"],
+    "audi": ["a4", "a6", "q5", "q7", "a3", "a5", "q3", "tt"],
+}
+# fmt: on
+
+# Spelling fixes applied before the catalog lookup
+DIRECT_MAPPINGS: dict[str, str] = {
+    "4 runner": "4runner",
+    "4- runner": "4runner",
+    "4-runner": "4runner",
+    "pkup": "pickup",
+    "p/u": "pickup",
+}
+
+# Ford F-series written as "f150", "f 350", "f-450sd"... -> "f-150", "f-350", "f-450sd"
+F_SERIES_PATTERN = re.compile(r"\bf[\s-]?([1-7]50)(?!\d)")
+# A leading model year in the model text ("2014 mazda3") is not part of the model
+LEADING_YEAR_PATTERN = re.compile(r"^(19|20)\d{2}\b\s*")
+
+# Words that mark the end of the model name in a listing title (trim level, body, condition...)
+# fmt: off
+JUNK_WORDS: list[str] = [
+    "owner", "clean", "title", "rust", "free", "new", "lift", "tires", "wheels", "door",
+    "4wd", "awd", "4x4", "auto", "manual", "cyl", "v6", "v8", "sedan", "suv", "coupe",
+    "convertible", "hatchback", "pickup", "truck", "van", "wagon", "edition", "sport",
+    "limited", "lx", "ex", "se", "le", "xlt", "lariat",
+]
+# fmt: on
+
+# Cuts from the token that contains a noise word ("sh-awd", "4-door") to the end of the text
+JUNK_PATTERN = re.compile(r"\S*\b(" + "|".join(JUNK_WORDS) + r")\b.*")
+NON_ALPHANUMERIC_PATTERN = re.compile(r"[^a-z0-9\s-]")
+
+# Catalog names per brand, longest first, so "grand cherokee" wins over "cherokee"
+_CATALOG_BY_LENGTH: dict[str, list[str]] = {
+    brand: sorted(models, key=len, reverse=True) for brand, models in KNOWN_MODELS.items()
+}
+
+
+def clean_model_name(manufacturer: str | None, raw_model: str | None) -> str:
+    """Normalize a free-text model name.
+
+    Returns a catalog model when one is found in the text, otherwise the first two tokens of
+    the cleaned text, "other" when nothing is left, or "unknown" when there is no model text.
+    """
+    if not raw_model:
+        return "unknown"
+
+    brand = str(manufacturer).lower().strip() if manufacturer else ""
+    text = LEADING_YEAR_PATTERN.sub("", str(raw_model).lower().strip())
+
+    for wrong, right in DIRECT_MAPPINGS.items():
+        if wrong in text:
+            text = text.replace(wrong, right)
+    text = F_SERIES_PATTERN.sub(r"f-\1", text)
+
+    for model in _CATALOG_BY_LENGTH.get(brand, []):
+        if model in text:
+            return model
+
+    # "Super Duty" without a series number: assume the most common one
+    if brand == "ford" and "super duty" in text:
+        return "f-250"
+
+    # Fallback: drop the brand as a whole word, cut at the first noise word, keep alphanumerics
+    if brand:
+        text = re.sub(rf"\b{re.escape(brand)}\b", "", text)
+    text = JUNK_PATTERN.sub("", text.strip())
+    text = NON_ALPHANUMERIC_PATTERN.sub("", text)
+
+    tokens = [token.strip("-") for token in text.split()]
+    tokens = [token for token in tokens if token]
+    return " ".join(tokens[:2]) if tokens else "other"

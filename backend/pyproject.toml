@@ -16,6 +16,13 @@ select = [
     "SIM", # flake8-simplify
 ]
 
+[tool.ruff.lint.isort]
+# Flat modules of the API (.) and of the Spark ETL (spark/jobs)
+known-first-party = [
+    "config", "database", "main", "services",
+    "etl_job", "normalize", "transforms",
+]
+
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI declares parameters with calls in defaults by design
 extend-immutable-calls = ["fastapi.Query", "fastapi.Depends"]
@@ -31,3 +38,7 @@ addopts = "-ra"
 source = ["."]
 omit = ["tests/*", ".venv/*", "notebooks/*"]
 branch = true
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true

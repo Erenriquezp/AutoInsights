@@ -1,0 +1,3 @@
+# Test tooling for the ETL, installed only in the `test` image target (Python 3.10)
+pytest==9.2.0
+pytest-cov==7.1.0
