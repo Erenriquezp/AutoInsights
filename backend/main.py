@@ -88,6 +88,12 @@ def get_geo_data():
     return MarketService.get_geo_data()
 
 
+@app.get("/api/market/mileage", tags=["Market"])
+def get_mileage_distribution():
+    """Listings per 10,000-mile odometer band across all models, and the median odometer."""
+    return MarketService.get_mileage_distribution()
+
+
 @app.get("/api/market/brands", tags=["Market"])
 def get_top_brands(limit: int = Query(10, ge=1, le=100)):
     """Top brands by listing volume."""

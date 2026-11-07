@@ -241,3 +241,22 @@ def test_model_selector_hides_models_with_few_listings(monkeypatch, tmp_path):
     assert client.get("/api/models/ford").json() == ["f-150"]  # 15 + 5 listings across years
     # a rare model is hidden from the selector but its data is still served
     assert client.get("/api/vehicles/depreciation?brand=ford&model=24 ft").status_code == 200
+
+
+def test_market_mileage_distribution(client):
+    data = client.get("/api/market/mileage").json()
+
+    assert data["bucket_size"] == 10_000
+    assert data["median_odometer"] == 5_000.0
+    assert data["buckets"] == [
+        {"odometer_range": 0, "count": 2},
+        {"odometer_range": 90_000, "count": 1},
+    ]
+
+
+def test_market_mileage_distribution_without_data(monkeypatch, tmp_path):
+    use_repository(monkeypatch, GoldRepository(tmp_path))
+
+    data = TestClient(main.app).get("/api/market/mileage").json()
+
+    assert data == {"bucket_size": 10_000, "median_odometer": None, "buckets": []}

@@ -74,6 +74,28 @@ class MarketService(BaseService):
         return _repo().query("SELECT * FROM geo_distribution ORDER BY count DESC, state")
 
     @staticmethod
+    def get_mileage_distribution() -> dict[str, Any]:
+        """Listings per odometer band (all models), below MILEAGE_MAX_BAND, and the median."""
+        size = int(settings.MILEAGE_BUCKET_SIZE)
+        buckets = _repo().query(
+            f"""
+            SELECT CAST(floor(odometer / {size}) * {size} AS BIGINT) AS odometer_range,
+                   count(*) AS count
+            FROM mileage_points
+            WHERE odometer < ?
+            GROUP BY 1
+            ORDER BY 1
+            """,
+            [settings.MILEAGE_MAX_BAND],
+        )
+        median = _repo().query_one("SELECT median(odometer) AS median FROM mileage_points")
+        return {
+            "bucket_size": size,
+            "median_odometer": median["median"] if median else None,
+            "buckets": buckets,
+        }
+
+    @staticmethod
     def get_top_brands(limit: int = 10) -> list[dict[str, Any]]:
         return _repo().query(
             "SELECT * FROM top_brands ORDER BY count DESC, manufacturer LIMIT ?", [limit]
