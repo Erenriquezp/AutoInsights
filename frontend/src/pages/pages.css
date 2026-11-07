@@ -110,8 +110,16 @@
   line-height: 1.05;
 }
 .compare-card .kpi-band dl {
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  /* four figures in half the width: a 2 x 2 block keeps them apart */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+.compare-card .readout:nth-child(2n) {
+  border-right: 0;
+}
+.compare-card .readout:nth-child(-n + 2) {
+  border-bottom: 1px solid var(--line-soft);
+}
+
 
 .vehicle-head {
   display: grid;

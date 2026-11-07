@@ -1,6 +1,6 @@
 import { CartesianGrid, Legend, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from 'recharts';
 import type { MileagePoint } from '../lib/types';
-import { AXIS, GRID, TOOLTIP } from './theme';
+import { AXIS, axisWidth, GRID, TOOLTIP } from './theme';
 
 export interface ScatterSeries {
   name: string;
@@ -34,7 +34,14 @@ export default function ScatterPlot({ series, xName, yName, formatX, formatY, he
             domain={[0, 'dataMax']}
             tickMargin={8}
           />
-          <YAxis type="number" dataKey="price" name={yName} {...AXIS} width={56} tickFormatter={formatY} />
+          <YAxis
+            type="number"
+            dataKey="price"
+            name={yName}
+            {...AXIS}
+            width={axisWidth([formatY(Math.max(0, ...series.flatMap((s) => s.points.map((p) => p.price))) * 1.1)])}
+            tickFormatter={formatY}
+          />
           <ZAxis range={[28, 28]} />
           <Tooltip
             cursor={{ stroke: '#3a414c' }}

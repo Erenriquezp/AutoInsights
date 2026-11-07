@@ -83,6 +83,8 @@ export interface Readout {
   note?: string;
   /** an "evidence" figure: drawn in the accent */
   evidence?: boolean;
+  /** a word rather than a number (a state name): smaller and allowed to wrap */
+  text?: boolean;
 }
 
 export function KpiBand({ label, items }: { label: string; items: Readout[] }) {
@@ -90,7 +92,7 @@ export function KpiBand({ label, items }: { label: string; items: Readout[] }) {
     <section className="kpi-band" aria-label={label}>
       <dl>
         {items.map((item) => (
-          <div key={item.label} className={`readout${item.evidence ? ' is-evidence' : ''}`}>
+          <div key={item.label} className={`readout${item.evidence ? ' is-evidence' : ''}${item.text ? ' is-text' : ''}`}>
             <dt>{item.label}</dt>
             <dd>
               <span className="readout-value mono">{item.value}</span>

@@ -47,7 +47,7 @@ export default function GeographyPage() {
             <KpiBand
               label={t.geography.selected}
               items={[
-                { label: t.geography.selected, value: STATE_NAMES[current.state] ?? current.state.toUpperCase() },
+                { label: t.geography.selected, value: STATE_NAMES[current.state] ?? current.state.toUpperCase(), text: true },
                 { label: t.geography.listings, value: f.number(current.count), note: `${f.percent((current.count / total) * 100)}, #${sorted.indexOf(current) + 1}`, evidence: true },
                 { label: t.geography.avgPrice, value: f.money(current.avg_price) },
               ]}

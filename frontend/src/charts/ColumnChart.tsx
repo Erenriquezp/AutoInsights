@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AXIS, GRID, TOOLTIP } from './theme';
+import { AXIS, axisWidth, GRID, TOOLTIP } from './theme';
 
 export interface Column {
   key: string | number;
@@ -37,7 +37,7 @@ export default function ColumnChart({
             interval={labelEvery - 1}
             tickMargin={8}
           />
-          <YAxis {...AXIS} width={56} tickFormatter={formatAxis} />
+          <YAxis {...AXIS} width={axisWidth([formatAxis(Math.max(0, ...data.map((d) => d.value)) * 1.1)])} tickFormatter={formatAxis} />
           <Tooltip
             cursor={{ fill: 'rgba(255,255,255,0.04)' }}
             {...TOOLTIP}

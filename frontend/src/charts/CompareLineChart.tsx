@@ -1,5 +1,5 @@
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AXIS, GRID, TOOLTIP } from './theme';
+import { AXIS, axisWidth, GRID, TOOLTIP } from './theme';
 
 export interface Series {
   name: string;
@@ -34,7 +34,7 @@ export default function CompareLineChart({ primary, secondary, formatValue, form
         <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} stroke={GRID} />
           <XAxis dataKey="year" {...AXIS} tickMargin={8} interval="preserveStartEnd" />
-          <YAxis {...AXIS} width={56} tickFormatter={formatAxis} />
+          <YAxis {...AXIS} width={axisWidth([formatAxis(Math.max(0, ...primary.values.values(), ...secondary.values.values()) * 1.1)])} tickFormatter={formatAxis} />
           <Tooltip {...TOOLTIP} formatter={(value) => formatValue(Number(value))} />
           <Legend wrapperStyle={{ color: '#9aa0a8', fontSize: 13, paddingTop: 8 }} iconType="plainline" />
           <Line

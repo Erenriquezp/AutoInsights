@@ -2,6 +2,12 @@
 
 export const GRID = '#252c35';
 
+/** Y-axis width that fits the longest tick label (Spanish "100 mil $" is longer than "$100K"). */
+export function axisWidth(labels: string[]): number {
+  const longest = Math.max(0, ...labels.map((l) => l.length));
+  return Math.max(44, Math.round(longest * 7.6 + 14));
+}
+
 export const AXIS = {
   stroke: '#3a414c',
   tick: { fill: '#9aa0a8', fontSize: 12, fontFamily: 'JetBrains Mono, ui-monospace, monospace' },
