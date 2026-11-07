@@ -2,7 +2,11 @@ from functools import lru_cache
 from typing import Any
 
 from config import settings
-from database import db
+from repository import get_repository
+
+
+def _repo():
+    return get_repository()
 
 
 class BaseService:
@@ -19,14 +23,16 @@ class MetadataService(BaseService):
 
     @staticmethod
     def get_brands() -> list[str]:
-        brands = db.distinct("prices", "manufacturer")
-        return MetadataService.clean_list(brands)
+        rows = _repo().query("SELECT DISTINCT manufacturer FROM prices_by_model_year")
+        return MetadataService.clean_list([row["manufacturer"] for row in rows])
 
     @staticmethod
     @lru_cache(maxsize=512)
     def get_models(brand: str) -> list[str]:
-        models = db.distinct("prices", "model", {"manufacturer": brand})
-        return MetadataService.clean_list(models)
+        rows = _repo().query(
+            "SELECT DISTINCT model FROM prices_by_model_year WHERE manufacturer = ?", [brand]
+        )
+        return MetadataService.clean_list([row["model"] for row in rows])
 
 
 class MarketService(BaseService):
@@ -34,7 +40,7 @@ class MarketService(BaseService):
 
     @staticmethod
     def get_stats() -> dict[str, Any]:
-        stats = db.find_one("stats")
+        stats = _repo().query_one("SELECT * FROM market_stats")
         return stats or {
             "total_vehicles": 0,
             "total_brands": 0,
@@ -45,24 +51,26 @@ class MarketService(BaseService):
     @staticmethod
     def get_trend() -> list[dict[str, Any]]:
         """Average price and listing volume per model year."""
-        return db.find_many("trend", sort=("year", 1))
+        return _repo().query("SELECT * FROM price_volume_by_year ORDER BY year")
 
     @staticmethod
     def get_condition_distribution() -> list[dict[str, Any]]:
-        return db.find_many("condition", sort=("count", -1))
+        return _repo().query("SELECT * FROM condition_distribution ORDER BY count DESC, condition")
 
     @staticmethod
     def get_price_histogram() -> list[dict[str, Any]]:
-        return db.find_many("histogram", sort=("price_range", 1))
+        return _repo().query("SELECT * FROM price_histogram ORDER BY price_range")
 
     @staticmethod
     def get_geo_data() -> list[dict[str, Any]]:
         """Listings and average price per US state."""
-        return db.find_many("geo", sort=("count", -1))
+        return _repo().query("SELECT * FROM geo_distribution ORDER BY count DESC, state")
 
     @staticmethod
     def get_top_brands(limit: int = 10) -> list[dict[str, Any]]:
-        return db.find_many("brands", limit=limit)
+        return _repo().query(
+            "SELECT * FROM top_brands ORDER BY count DESC, manufacturer LIMIT ?", [limit]
+        )
 
 
 class VehicleService(BaseService):
@@ -70,10 +78,9 @@ class VehicleService(BaseService):
 
     @staticmethod
     def get_depreciation(brand: str, model: str) -> dict[str, Any] | None:
-        history = db.find_many(
-            "prices",
-            query={"manufacturer": brand, "model": model},
-            sort=("year", 1),
+        history = _repo().query(
+            "SELECT * FROM prices_by_model_year WHERE manufacturer = ? AND model = ? ORDER BY year",
+            [brand, model],
         )
         if not history:
             return None
@@ -117,10 +124,23 @@ class VehicleService(BaseService):
 
     @staticmethod
     def get_mileage_analysis(brand: str, model: str) -> list[dict[str, Any]]:
-        """Price vs. odometer points for the scatter plot."""
-        return db.find_many(
-            "mileage",
-            query={"manufacturer": brand, "model": model},
-            projection={"_id": 0, "odometer": 1, "price": 1},
-            limit=settings.MILEAGE_LIMIT,
+        """Up to MILEAGE_LIMIT price vs. odometer points for the scatter plot.
+
+        A seeded reservoir sample: uniform over the model's listings (so the scatter reflects the
+        real distribution) and the same on every request. The sample size cannot be a bound
+        parameter in DuckDB, so it comes from settings as a validated int.
+        """
+        sample_size = int(settings.MILEAGE_LIMIT)
+        return _repo().query(
+            f"""
+            SELECT odometer, price
+            FROM (
+                SELECT odometer, price
+                FROM mileage_points
+                WHERE manufacturer = ? AND model = ?
+            )
+            USING SAMPLE reservoir({sample_size} ROWS) REPEATABLE (42)
+            ORDER BY odometer
+            """,
+            [brand, model],
         )

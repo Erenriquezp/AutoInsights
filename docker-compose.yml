@@ -1,4 +1,5 @@
-# Local stack: MongoDB, a Spark cluster (1 master + 2 workers), the API and the dashboard.
+# Local stack: a Spark cluster (1 master + 2 workers) that writes the gold tables, the API that
+# serves them with DuckDB, and the dashboard. Gold tables live in backend/data/gold (git-ignored).
 #
 #   docker compose up -d --build                  # development (Vite dev server on :5173)
 #   docker compose --profile prod up -d --build   # adds the production build on :4173
@@ -8,22 +9,6 @@
 # Optional overrides go in .env (see .env.example).
 
 services:
-  # ---------------------------------------------------------------- data
-  mongodb:
-    image: mongo:6.0
-    container_name: autoinsights_mongo
-    ports:
-      - "127.0.0.1:27017:27017"
-    volumes:
-      - mongo_data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - bigdata_net
-
   # ---------------------------------------------------------------- processing
   spark-master:
     build:
@@ -95,12 +80,8 @@ services:
     volumes:
       - ./backend:/app # live code for --reload in development
     environment:
-      - MONGO_URI=${MONGO_URI:-mongodb://mongodb:27017}
-      - MONGO_DATABASE=${MONGO_DATABASE:-autoinsights}
+      - GOLD_PATH=/app/data/gold
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:4173}
-    depends_on:
-      mongodb:
-        condition: service_healthy
     networks:
       - bigdata_net
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
@@ -138,9 +119,6 @@ services:
       - backend
     networks:
       - bigdata_net
-
-volumes:
-  mongo_data:
 
 networks:
   bigdata_net:

@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
 
 
 def _split_csv(value: str) -> list[str]:
@@ -11,24 +12,10 @@ class Settings:
     """Application settings, read from environment variables."""
 
     APP_VERSION: str = "2.0.0-dev"
-    MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://mongodb:27017")
-    DATABASE_NAME: str = os.getenv("MONGO_DATABASE", "autoinsights")
+    # Folder with the gold tables written by the ETL: <GOLD_PATH>/<table>/*.parquet
+    GOLD_PATH: str = os.getenv("GOLD_PATH", str(Path(__file__).resolve().parent / "data" / "gold"))
     CORS_ORIGINS: list[str] = field(
         default_factory=lambda: _split_csv(os.getenv("CORS_ORIGINS", "http://localhost:5173"))
-    )
-
-    # Logical name -> MongoDB collection written by the ETL
-    COLLECTIONS: dict[str, str] = field(
-        default_factory=lambda: {
-            "prices": "precios_promedio",
-            "trend": "kpi_price_volume",
-            "mileage": "kilometraje",
-            "stats": "estadisticas_mercado",
-            "condition": "distribucion_condicion",
-            "histogram": "histograma_precios",
-            "geo": "distribucion_geo",
-            "brands": "top_brands",
-        }
     )
 
     # Maximum points returned for the price vs. mileage scatter plot

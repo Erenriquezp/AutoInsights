@@ -19,8 +19,8 @@ select = [
 [tool.ruff.lint.isort]
 # Flat modules of the API (.) and of the Spark ETL (spark/jobs)
 known-first-party = [
-    "config", "database", "main", "services",
-    "etl_job", "normalize", "transforms",
+    "config", "main", "repository", "services",
+    "etl_job", "normalize", "transforms", "gold_fixtures",
 ]
 
 [tool.ruff.lint.flake8-bugbear]

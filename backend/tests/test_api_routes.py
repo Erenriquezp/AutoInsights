@@ -1,11 +1,12 @@
-"""API routes and services over an in-memory database shaped like the ETL output."""
+"""API contract over real gold tables: Parquet fixtures loaded by the DuckDB repository."""
 
 import pytest
-from fakes import FakeDatabase
 from fastapi.testclient import TestClient
 
 import main
 import services
+from gold_fixtures import write_gold
+from repository import GoldRepository
 
 PRICES = [
     {"manufacturer": "ford", "model": "f-150", "year": 2010, "avg_price": 12_000.0, "count": 10},
@@ -17,20 +18,23 @@ PRICES = [
 ]
 
 DATA = {
-    "prices": PRICES,
-    "stats": [{"total_vehicles": 54, "total_brands": 2, "avg_market_price": 25_000.0}],
-    "trend": [
+    "prices_by_model_year": PRICES,
+    "market_stats": [{"total_vehicles": 54, "total_brands": 2, "avg_market_price": 25_000.0}],
+    "price_volume_by_year": [
         {"year": 2020, "avg_price_year": 40_000.0, "volume_year": 30},
         {"year": 2010, "avg_price_year": 12_000.0, "volume_year": 10},
     ],
-    "condition": [{"condition": "fair", "count": 3}, {"condition": "good", "count": 40}],
-    "histogram": [{"price_range": 2_000, "count": 4}, {"price_range": 0, "count": 1}],
-    "geo": [
+    "condition_distribution": [
+        {"condition": "fair", "count": 3},
+        {"condition": "good", "count": 40},
+    ],
+    "price_histogram": [{"price_range": 2_000, "count": 4}, {"price_range": 0, "count": 1}],
+    "geo_distribution": [
         {"state": "tx", "count": 5, "avg_price": 1.0},
         {"state": "ca", "count": 9, "avg_price": 2.0},
     ],
-    "brands": [{"manufacturer": "ford", "count": 46}, {"manufacturer": "toyota", "count": 8}],
-    "mileage": [
+    "top_brands": [{"manufacturer": "ford", "count": 46}, {"manufacturer": "toyota", "count": 8}],
+    "mileage_points": [
         {"manufacturer": "ford", "model": "f-150", "odometer": 1_000.0, "price": 30_000},
         {"manufacturer": "ford", "model": "f-150", "odometer": 90_000.0, "price": 15_000},
         {"manufacturer": "toyota", "model": "camry", "odometer": 5_000.0, "price": 20_000},
@@ -38,10 +42,19 @@ DATA = {
 }
 
 
-@pytest.fixture
-def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
-    monkeypatch.setattr(services, "db", FakeDatabase(DATA))
+def use_repository(monkeypatch: pytest.MonkeyPatch, repository: GoldRepository) -> None:
+    monkeypatch.setattr(services, "get_repository", lambda: repository)
     services.MetadataService.get_models.cache_clear()
+
+
+@pytest.fixture(scope="module")
+def gold_repository(tmp_path_factory) -> GoldRepository:
+    return GoldRepository(write_gold(tmp_path_factory.mktemp("gold"), DATA))
+
+
+@pytest.fixture
+def client(monkeypatch: pytest.MonkeyPatch, gold_repository: GoldRepository) -> TestClient:
+    use_repository(monkeypatch, gold_repository)
     return TestClient(main.app)
 
 
@@ -65,8 +78,8 @@ def test_market_stats(client):
     assert client.get("/api/market/stats").json()["total_vehicles"] == 54
 
 
-def test_market_stats_default_when_the_etl_has_not_run(monkeypatch):
-    monkeypatch.setattr(services, "db", FakeDatabase({}))
+def test_market_stats_default_when_the_etl_has_not_run(monkeypatch, tmp_path):
+    use_repository(monkeypatch, GoldRepository(tmp_path))  # empty folder: no gold tables
 
     stats = TestClient(main.app).get("/api/market/stats").json()
 
@@ -147,7 +160,7 @@ def test_depreciation_requires_brand_and_model(client):
 def test_mileage_returns_only_price_and_odometer_for_the_model(client):
     points = client.get("/api/vehicles/mileage?brand=ford&model=f-150").json()
 
-    assert points == [
+    assert sorted(points, key=lambda p: p["odometer"]) == [
         {"odometer": 1_000.0, "price": 30_000},
         {"odometer": 90_000.0, "price": 15_000},
     ]
@@ -163,3 +176,20 @@ def test_zero_newest_price_is_reported_as_appreciation():
     result = services.VehicleService._calculate_depreciation(history)
 
     assert result == {"text": "Value appreciation (classic)", "value": 0}
+
+
+def test_mileage_sample_is_capped_deterministic_and_from_the_model(monkeypatch, tmp_path):
+    points = [
+        {"manufacturer": "ford", "model": "f-150", "odometer": float(i), "price": 1_000 + i}
+        for i in range(1, 1_201)
+    ] + [{"manufacturer": "ford", "model": "ranger", "odometer": 0.5, "price": 1}]
+    use_repository(monkeypatch, GoldRepository(write_gold(tmp_path, {"mileage_points": points})))
+    client = TestClient(main.app)
+
+    first = client.get("/api/vehicles/mileage?brand=ford&model=f-150").json()
+    second = client.get("/api/vehicles/mileage?brand=ford&model=f-150").json()
+
+    assert len(first) == services.settings.MILEAGE_LIMIT
+    assert first == second
+    assert all(p["price"] == 1_000 + p["odometer"] for p in first)  # only f-150 rows
+    assert [p["odometer"] for p in first] == sorted(p["odometer"] for p in first)

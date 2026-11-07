@@ -1,6 +1,7 @@
 # Data (the 1.4 GB dataset and generated tables never go to git)
 *.csv
 *.parquet
+backend/data/gold/
 !**/fixtures/**
 
 # Python

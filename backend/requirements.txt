@@ -1,4 +1,4 @@
 # Runtime dependencies of the API (pinned; updated by Dependabot)
 fastapi==0.162.2
 uvicorn==0.54.0
-pymongo==4.19.0
+duckdb==2.0.0
