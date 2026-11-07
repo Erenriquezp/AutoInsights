@@ -12,11 +12,11 @@ endpoint from them. The same tables are the schema the "Ask the data" feature ex
 | Price | strictly between $500 and $1,000,000 |
 | Model year | 1991 to 2025 |
 | Brand and model | both present; model normalized to a catalog name or a short cleaned name |
-| Odometer (mileage table only) | strictly between 0 and 500,000 |
+| Odometer (mileage table only) | at least 100 and under 500,000 miles (readings like 1, 2, 5, 10 are placeholders) |
 | State (geo table only) | 2-letter US code |
 
 Model normalization (`normalize.py`) lowercases the text, strips a leading model year, fixes
-known spellings (`f150`, `f 350` -> `f-150`, `f-350`), matches a per-brand catalog (longest name
+known spellings (`f150`, `f 350` -> `f-150`, `f-350`; Ford E-Series `e350` -> `e-350`), matches a per-brand catalog (longest name
 first), and otherwise drops the brand and anything from the first trim/noise word on, keeping
 the first two tokens. Rows that normalize to `unknown` are dropped; `other` is kept.
 
@@ -24,7 +24,9 @@ the first two tokens. Rows that normalize to `unknown` are dropped; `other` is k
 
 ### `prices_by_model_year` (16,007 rows)
 Average asking price per brand, model and model year. Source of depreciation curves and of the
-brand and model selectors.
+brand and model selectors. The model selector lists only models with at least 20 listings
+(`MIN_MODEL_LISTINGS`): 879 of 4,693 models, covering 96 % of listings. Rare models keep their
+data and can still be queried.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -41,7 +43,7 @@ brand and model selectors.
 | `avg_price_year` | DOUBLE | USD |
 | `volume_year` | BIGINT | listings |
 
-### `mileage_points` (351,503 rows)
+### `mileage_points` (348,901 rows)
 One row per listing with a plausible odometer. The API returns a seeded 500-point sample per model.
 
 | Column | Type | Notes |

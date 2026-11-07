@@ -30,7 +30,14 @@ class MetadataService(BaseService):
     @lru_cache(maxsize=512)
     def get_models(brand: str) -> list[str]:
         rows = _repo().query(
-            "SELECT DISTINCT model FROM prices_by_model_year WHERE manufacturer = ?", [brand]
+            """
+            SELECT model
+            FROM prices_by_model_year
+            WHERE manufacturer = ?
+            GROUP BY model
+            HAVING sum(count) >= ?
+            """,
+            [brand, settings.MIN_MODEL_LISTINGS],
         )
         return MetadataService.clean_list([row["model"] for row in rows])
 

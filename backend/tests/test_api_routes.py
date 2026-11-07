@@ -11,7 +11,7 @@ from repository import GoldRepository
 PRICES = [
     {"manufacturer": "ford", "model": "f-150", "year": 2010, "avg_price": 12_000.0, "count": 10},
     {"manufacturer": "ford", "model": "f-150", "year": 2020, "avg_price": 40_000.0, "count": 30},
-    {"manufacturer": "ford", "model": "mustang", "year": 2015, "avg_price": 20_000.0, "count": 5},
+    {"manufacturer": "ford", "model": "mustang", "year": 2015, "avg_price": 20_000.0, "count": 25},
     {"manufacturer": "ford", "model": "unknown", "year": 2015, "avg_price": 1.0, "count": 1},
     {"manufacturer": "toyota", "model": "camry", "year": 2018, "avg_price": 18_000.0, "count": 8},
     {"manufacturer": "unknown", "model": "x", "year": 2018, "avg_price": 1.0, "count": 1},
@@ -193,3 +193,19 @@ def test_mileage_sample_is_capped_deterministic_and_from_the_model(monkeypatch, 
     assert first == second
     assert all(p["price"] == 1_000 + p["odometer"] for p in first)  # only f-150 rows
     assert [p["odometer"] for p in first] == sorted(p["odometer"] for p in first)
+
+
+def test_model_selector_hides_models_with_few_listings(monkeypatch, tmp_path):
+    rows = [
+        {"manufacturer": "ford", "model": "f-150", "year": 2010, "avg_price": 1.0, "count": 15},
+        {"manufacturer": "ford", "model": "f-150", "year": 2011, "avg_price": 1.0, "count": 5},
+        {"manufacturer": "ford", "model": "24 ft", "year": 2010, "avg_price": 1.0, "count": 19},
+    ]
+    use_repository(
+        monkeypatch, GoldRepository(write_gold(tmp_path, {"prices_by_model_year": rows}))
+    )
+    client = TestClient(main.app)
+
+    assert client.get("/api/models/ford").json() == ["f-150"]  # 15 + 5 listings across years
+    # a rare model is hidden from the selector but its data is still served
+    assert client.get("/api/vehicles/depreciation?brand=ford&model=24 ft").status_code == 200

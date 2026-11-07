@@ -20,6 +20,9 @@ class Settings:
 
     # Maximum points returned for the price vs. mileage scatter plot
     MILEAGE_LIMIT: int = 500
+    # Models with fewer listings are hidden from the selector (their data is still served).
+    # 20 keeps 879 of 4,693 models and 96 % of all listings.
+    MIN_MODEL_LISTINGS: int = int(os.getenv("MIN_MODEL_LISTINGS", "20"))
     EXCLUDE_EMPTY_VALUES: tuple[str | None, ...] = ("unknown", None, "")
 
 
