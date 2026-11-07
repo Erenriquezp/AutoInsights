@@ -1,20 +1,49 @@
+# Data (the 1.4 GB dataset and generated tables never go to git)
 *.csv
 *.parquet
+!**/fixtures/**
 
 # Python
 __pycache__/
 *.py[cod]
-.ipynb_checkpoints/
+.venv/
+venv/
+env/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
 
 # Jupyter
 .ipynb_checkpoints/
-*.ipynb_checkpoints
 
-# Entorno
+# Environment
 .env
-venv/
-env/
+.env.*
+!.env.example
 
-# IDE
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+
+# Logs and build output
+logs/
+*.log
+dist/
+
+# Private: planning, progress state and AI assistant context (kept locally, never published)
+.planning/
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+
+# IDE / OS
 .vscode/
 .idea/
+.DS_Store
+Thumbs.db
