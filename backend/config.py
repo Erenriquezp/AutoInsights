@@ -25,5 +25,10 @@ class Settings:
     MIN_MODEL_LISTINGS: int = int(os.getenv("MIN_MODEL_LISTINGS", "20"))
     EXCLUDE_EMPTY_VALUES: tuple[str | None, ...] = ("unknown", None, "")
 
+    # "Ask the data"
+    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "fake")  # fake (offline) | groq | gemini
+    ASK_TIMEOUT_SECONDS: float = float(os.getenv("ASK_TIMEOUT_SECONDS", "3"))
+    QUESTION_MAX_LENGTH: int = 300
+
 
 settings = Settings()

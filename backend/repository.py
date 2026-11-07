@@ -6,6 +6,7 @@ the "Ask the data" feature will generate) can read files or change settings.
 """
 
 import logging
+import threading
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -61,6 +62,44 @@ class GoldRepository:
     def query_one(self, sql: str, params: list[Any] | None = None) -> dict[str, Any] | None:
         rows = self.query(sql, params)
         return rows[0] if rows else None
+
+    def run_untrusted(self, sql: str, timeout_seconds: float) -> tuple[list[str], list[tuple]]:
+        """Run validated, model-generated SQL with a time limit. Returns (columns, rows).
+
+        Raises QueryTimeout when the limit is hit and QueryFailed for any database error.
+        """
+        cursor = self._con.cursor()
+        timer = threading.Timer(timeout_seconds, cursor.interrupt)
+        timer.start()
+        try:
+            result = cursor.execute(sql)
+            return [column[0] for column in result.description], result.fetchall()
+        except duckdb.InterruptException as error:
+            raise QueryTimeout(f"The query took longer than {timeout_seconds:g}s.") from error
+        except duckdb.Error as error:
+            # First line only: DuckDB messages name columns and tables, nothing secret
+            raise QueryFailed(str(error).splitlines()[0][:300]) from error
+        finally:
+            timer.cancel()
+            cursor.close()
+
+    def describe(self) -> dict[str, list[tuple[str, str]]]:
+        """Column names and types of every loaded gold table."""
+        return {
+            table: [
+                (row[0], row[1])
+                for row in self._con.cursor().execute(f'DESCRIBE "{table}"').fetchall()
+            ]
+            for table in self.loaded_tables
+        }
+
+
+class QueryTimeout(Exception):
+    pass
+
+
+class QueryFailed(Exception):
+    pass
 
 
 @lru_cache(maxsize=1)

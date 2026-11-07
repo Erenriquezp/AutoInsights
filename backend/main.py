@@ -1,10 +1,17 @@
 import logging
+from dataclasses import asdict
+from functools import lru_cache
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, field_validator
 
+from ask.providers import EXAMPLES, get_provider
+from ask.service import AskError, AskService
 from config import settings
+from repository import get_repository
 from services import MarketService, MetadataService, VehicleService
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -16,13 +23,13 @@ app = FastAPI(
     description="Used-car market analytics",
 )
 
-# Read-only public API without cookies or auth headers, so no credentials are allowed.
+# Public API without cookies or auth headers, so no credentials are allowed.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=False,
-    allow_methods=["GET"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
 
@@ -109,7 +116,61 @@ def get_mileage_analysis(
     return VehicleService.get_mileage_analysis(brand, model)
 
 
+# ---------------------------------------------------------------- ask the data
+class AskRequest(BaseModel):
+    question: str = Field(min_length=3, max_length=settings.QUESTION_MAX_LENGTH)
+
+    @field_validator("question")
+    @classmethod
+    def strip_question(cls, value: str) -> str:
+        value = " ".join(value.split())
+        if len(value) < 3:
+            raise ValueError("The question is too short.")
+        return value
+
+
+class ChartSuggestion(BaseModel):
+    type: str
+    x: str | None = None
+    y: str | None = None
+
+
+class AskResponse(BaseModel):
+    question: str
+    sql: str
+    columns: list[str]
+    rows: list[list[Any]]
+    chart: ChartSuggestion
+    provider: str
+
+
+@lru_cache(maxsize=1)
+def get_ask_service() -> AskService:
+    return AskService(
+        get_repository(), get_provider(settings.LLM_PROVIDER), settings.ASK_TIMEOUT_SECONDS
+    )
+
+
+@app.post("/api/ask", tags=["Ask the data"], response_model=AskResponse)
+def ask_the_data(request: AskRequest):
+    """Answer a question in plain English with validated, visible SQL over the gold tables."""
+    return asdict(get_ask_service().ask(request.question))
+
+
+@app.get("/api/ask/examples", tags=["Ask the data"])
+def ask_examples() -> list[str]:
+    """Example questions for the UI."""
+    return list(EXAMPLES)
+
+
 # ---------------------------------------------------------------- errors
+@app.exception_handler(AskError)
+async def ask_error_handler(request: Request, exc: AskError) -> JSONResponse:
+    return JSONResponse(
+        status_code=exc.status, content={"detail": {"code": exc.code, "message": str(exc)}}
+    )
+
+
 @app.exception_handler(ValueError)
 async def value_error_handler(request: Request, exc: ValueError) -> JSONResponse:
     return JSONResponse(status_code=400, content={"detail": str(exc)})
