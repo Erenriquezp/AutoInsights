@@ -16,16 +16,17 @@ endpoint from them. The same tables are the schema the "Ask the data" feature ex
 | State (geo table only) | 2-letter US code |
 
 Model normalization (`normalize.py`) lowercases the text, strips a leading model year, fixes
-known spellings (`f150`, `f 350` -> `f-150`, `f-350`; Ford E-Series `e350` -> `e-350`), matches a per-brand catalog (longest name
+known spellings (`f150` -> `f-150`, `crv` -> `cr-v`, `rav 4` -> `rav4`, `3-series` -> `3 series`,
+Mazda's bare `3` -> `mazda3`, Mercedes `c 300` -> `c300`), drops brand aliases (`benz`, `vw`, `chevy`), matches a per-brand catalog (longest name
 first), and otherwise drops the brand and anything from the first trim/noise word on, keeping
 the first two tokens. Rows that normalize to `unknown` are dropped; `other` is kept.
 
 ## Tables
 
-### `prices_by_model_year` (16,007 rows)
+### `prices_by_model_year` (14,666 rows)
 Average asking price per brand, model and model year. Source of depreciation curves and of the
 brand and model selectors. The model selector lists only models with at least 20 listings
-(`MIN_MODEL_LISTINGS`): 879 of 4,693 models, covering 96 % of listings. Rare models keep their
+(`MIN_MODEL_LISTINGS`): 819 of 4,350 models, covering 96 % of listings. Rare models keep their
 data and can still be queried.
 
 | Column | Type | Notes |

@@ -24,7 +24,7 @@ class Settings:
     MILEAGE_BUCKET_SIZE: int = 10_000
     MILEAGE_MAX_BAND: int = 300_000
     # Models with fewer listings are hidden from the selector (their data is still served).
-    # 20 keeps 879 of 4,693 models and 96 % of all listings.
+    # 20 keeps 819 of 4,350 models and 96 % of all listings.
     MIN_MODEL_LISTINGS: int = int(os.getenv("MIN_MODEL_LISTINGS", "20"))
     # Model years with fewer listings are not used for price comparisons (too noisy)
     MIN_YEAR_LISTINGS: int = int(os.getenv("MIN_YEAR_LISTINGS", "20"))
