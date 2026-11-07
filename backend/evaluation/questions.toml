@@ -1,0 +1,242 @@
+# Evaluation set for "Ask the data".
+#
+# Each question has the SQL a careful analyst would write. The expected answer is the result of
+# that SQL on the current gold tables, so the set stays valid when the data is regenerated.
+#
+#   id        stable identifier
+#   level     easy (one table, one filter) | medium (aggregation, ranking) | hard (several steps)
+#   ordered   true when the row order is part of the answer (rankings, series)
+#   sql       reference query; it must pass the SQL guard
+#
+# The first six are the example questions shown in the UI.
+
+[[question]]
+id = "top-brands"
+level = "easy"
+ordered = true
+text = "Which brands have the most listings?"
+sql = "SELECT manufacturer, count FROM top_brands ORDER BY count DESC"
+
+[[question]]
+id = "price-by-year"
+level = "easy"
+ordered = true
+text = "What is the average price per model year?"
+sql = "SELECT year, avg_price_year FROM price_volume_by_year ORDER BY year"
+
+[[question]]
+id = "priciest-states"
+level = "easy"
+ordered = true
+text = "Which states have the highest average price?"
+sql = "SELECT state, avg_price FROM geo_distribution ORDER BY avg_price DESC LIMIT 10"
+
+[[question]]
+id = "listings-per-condition"
+level = "easy"
+ordered = false
+text = "How many listings are there per condition?"
+sql = "SELECT condition, count FROM condition_distribution"
+
+[[question]]
+id = "camry-median-price"
+level = "medium"
+ordered = false
+text = "What is the median price of a Toyota Camry?"
+sql = "SELECT median(price) FROM mileage_points WHERE manufacturer = 'toyota' AND model = 'camry'"
+
+[[question]]
+id = "top-ford-models"
+level = "medium"
+ordered = true
+text = "Which Ford models have the most listings?"
+sql = """
+SELECT model, SUM(count) AS listings FROM prices_by_model_year
+WHERE manufacturer = 'ford' GROUP BY model ORDER BY listings DESC LIMIT 10"""
+
+[[question]]
+id = "total-vehicles"
+level = "easy"
+ordered = false
+text = "How many vehicles are in the dataset?"
+sql = "SELECT total_vehicles FROM market_stats"
+
+[[question]]
+id = "avg-market-price"
+level = "easy"
+ordered = false
+text = "What is the average price across the whole market?"
+sql = "SELECT avg_market_price FROM market_stats"
+
+[[question]]
+id = "year-range"
+level = "easy"
+ordered = false
+text = "What are the oldest and newest model years in the data?"
+sql = "SELECT oldest_year, newest_year FROM market_stats"
+
+[[question]]
+id = "brand-count"
+level = "easy"
+ordered = false
+text = "How many different brands are there?"
+sql = "SELECT total_brands FROM market_stats"
+
+[[question]]
+id = "busiest-state"
+level = "easy"
+ordered = false
+text = "Which state has the most listings?"
+sql = "SELECT state FROM geo_distribution ORDER BY count DESC LIMIT 1"
+
+[[question]]
+id = "california-listings"
+level = "easy"
+ordered = false
+text = "How many listings are there in California?"
+sql = "SELECT count FROM geo_distribution WHERE state = 'ca'"
+
+[[question]]
+id = "texas-avg-price"
+level = "easy"
+ordered = false
+text = "What is the average asking price in Texas?"
+sql = "SELECT avg_price FROM geo_distribution WHERE state = 'tx'"
+
+[[question]]
+id = "quietest-states"
+level = "medium"
+ordered = true
+text = "Which five states have the fewest listings?"
+sql = "SELECT state, count FROM geo_distribution ORDER BY count ASC LIMIT 5"
+
+[[question]]
+id = "excellent-condition"
+level = "easy"
+ordered = false
+text = "How many listings are in excellent condition?"
+sql = "SELECT count FROM condition_distribution WHERE condition = 'excellent'"
+
+[[question]]
+id = "unknown-condition-share"
+level = "medium"
+ordered = false
+text = "What percentage of listings do not report a condition?"
+sql = """
+SELECT 100.0 * count / (SELECT SUM(count) FROM condition_distribution)
+FROM condition_distribution WHERE condition = 'unknown'"""
+
+[[question]]
+id = "busiest-model-year"
+level = "easy"
+ordered = false
+text = "Which model year has the most listings?"
+sql = "SELECT year FROM price_volume_by_year ORDER BY volume_year DESC LIMIT 1"
+
+[[question]]
+id = "price-2015"
+level = "easy"
+ordered = false
+text = "What is the average price of 2015 model year cars?"
+sql = "SELECT avg_price_year FROM price_volume_by_year WHERE year = 2015"
+
+[[question]]
+id = "under-10k"
+level = "medium"
+ordered = false
+text = "How many listings are priced under $10,000?"
+sql = "SELECT SUM(count) FROM price_histogram WHERE price_range < 10000"
+
+[[question]]
+id = "busiest-price-range"
+level = "medium"
+ordered = false
+text = "Which $2,000 price range has the most listings?"
+sql = "SELECT price_range FROM price_histogram ORDER BY count DESC LIMIT 1"
+
+[[question]]
+id = "f150-recent-prices"
+level = "medium"
+ordered = true
+text = "What is the average price of a Ford F-150 for each model year since 2015?"
+sql = """
+SELECT year, avg_price FROM prices_by_model_year
+WHERE manufacturer = 'ford' AND model = 'f-150' AND year >= 2015 ORDER BY year"""
+
+[[question]]
+id = "civic-listings"
+level = "medium"
+ordered = false
+text = "How many Honda Civic listings are there?"
+sql = "SELECT SUM(count) FROM prices_by_model_year WHERE manufacturer = 'honda' AND model = 'civic'"
+
+[[question]]
+id = "civic-avg-odometer"
+level = "medium"
+ordered = false
+text = "What is the average odometer reading of a Honda Civic?"
+sql = "SELECT AVG(odometer) FROM mileage_points WHERE manufacturer = 'honda' AND model = 'civic'"
+
+[[question]]
+id = "priciest-toyota"
+level = "hard"
+ordered = false
+text = "Among Toyota models with at least 100 listings, which one has the highest median price?"
+sql = """
+SELECT model FROM mileage_points WHERE manufacturer = 'toyota'
+GROUP BY model HAVING COUNT(*) >= 100 ORDER BY median(price) DESC LIMIT 1"""
+
+[[question]]
+id = "jeep-models"
+level = "medium"
+ordered = false
+text = "How many different Jeep models are listed?"
+sql = "SELECT COUNT(DISTINCT model) FROM prices_by_model_year WHERE manufacturer = 'jeep'"
+
+[[question]]
+id = "corvette-peak"
+level = "medium"
+ordered = false
+text = "What is the highest average price for any model year of the Chevrolet Corvette?"
+sql = """
+SELECT MAX(avg_price) FROM prices_by_model_year
+WHERE manufacturer = 'chevrolet' AND model = 'corvette'"""
+
+[[question]]
+id = "priciest-big-brand"
+level = "hard"
+ordered = false
+text = "Among brands with at least 1,000 listings, which one has the highest average price?"
+sql = """
+SELECT manufacturer FROM prices_by_model_year GROUP BY manufacturer
+HAVING SUM(count) >= 1000 ORDER BY SUM(avg_price * count) / SUM(count) DESC LIMIT 1"""
+
+[[question]]
+id = "camry-2010-vs-2020"
+level = "hard"
+ordered = false
+text = "How much more expensive is a 2020 Toyota Camry than a 2010 one, on average?"
+sql = """
+SELECT
+  (SELECT avg_price FROM prices_by_model_year
+   WHERE manufacturer = 'toyota' AND model = 'camry' AND year = 2020)
+  - (SELECT avg_price FROM prices_by_model_year
+     WHERE manufacturer = 'toyota' AND model = 'camry' AND year = 2010)"""
+
+[[question]]
+id = "pricey-f150-mileage"
+level = "hard"
+ordered = false
+text = "What is the median odometer reading of Ford F-150s priced over $30,000?"
+sql = """
+SELECT median(odometer) FROM mileage_points
+WHERE manufacturer = 'ford' AND model = 'f-150' AND price > 30000"""
+
+[[question]]
+id = "subaru-share"
+level = "hard"
+ordered = false
+text = "What percentage of all listings are Subarus?"
+sql = """
+SELECT 100.0 * SUM(count) / (SELECT total_vehicles FROM market_stats)
+FROM prices_by_model_year WHERE manufacturer = 'subaru'"""
