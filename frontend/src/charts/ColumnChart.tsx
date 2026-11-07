@@ -27,7 +27,7 @@ export default function ColumnChart({
   labelEvery = 1,
 }: ColumnChartProps) {
   return (
-    <div style={{ width: '100%', height }} aria-hidden="true">
+    <div style={{ width: '100%', height: `${height / 16}rem` }} aria-hidden="true">
       <ResponsiveContainer>
         <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 0 }} barCategoryGap="18%">
           <CartesianGrid vertical={false} stroke={GRID} />

@@ -4,6 +4,7 @@ import { useI18n } from '../i18n/context';
 import { api } from '../lib/api';
 import { brandName } from '../lib/format';
 import { useApi } from '../lib/useApi';
+import './pages.css';
 
 const ColumnChart = lazy(() => import('../charts/ColumnChart'));
 
@@ -17,6 +18,7 @@ export default function OverviewPage() {
   const conditions = useApi(api.conditions, []);
   const histogram = useApi(api.histogram, []);
   const brands = useApi(() => api.topBrands(10), []);
+  const mileage = useApi(api.mileageDistribution, []);
 
   if (stats.status === 'ready' && stats.data.total_vehicles === 0) {
     return <EmptyState title={t.states.empty}>{t.states.noGold}</EmptyState>;
@@ -41,6 +43,10 @@ export default function OverviewPage() {
   const years = trend.status === 'ready' ? trend.data.filter((y) => y.volume_year >= MIN_MARKET_YEAR_LISTINGS) : [];
   const lastYears = years.slice(-3).map((y) => y.year);
   const totalConditions = conditions.status === 'ready' ? conditions.data.reduce((sum, c) => sum + c.count, 0) : 0;
+  const medianBand =
+    mileage.status === 'ready' && mileage.data.median_odometer !== null
+      ? Math.floor(mileage.data.median_odometer / mileage.data.bucket_size) * mileage.data.bucket_size
+      : undefined;
   const peakBand =
     histogram.status === 'ready' ? [...histogram.data].sort((a, b) => b.count - a.count)[0]?.price_range : undefined;
 
@@ -54,9 +60,9 @@ export default function OverviewPage() {
         <Loading height={128} />
       )}
 
-      <div className="grid">
+      <div className="overview-grid">
         <Panel
-          className="wide"
+          className="area-trend"
           title={t.overview.trendTitle}
           help={`${fill(t.overview.trendHelp, { min: MIN_MARKET_YEAR_LISTINGS })} ${t.overview.trendHighlight}`}
           table={
@@ -88,7 +94,7 @@ export default function OverviewPage() {
         </Panel>
 
         <Panel
-          className="narrow"
+          className="area-condition"
           title={t.overview.conditionTitle}
           help={t.overview.conditionHelp}
           table={
@@ -123,11 +129,8 @@ export default function OverviewPage() {
             <Loading />
           )}
         </Panel>
-      </div>
-
-      <div className="grid">
         <Panel
-          className="wide"
+          className="area-price"
           title={t.overview.histTitle}
           help={t.overview.histHelp}
           table={
@@ -164,7 +167,48 @@ export default function OverviewPage() {
           )}
         </Panel>
 
-        <Panel className="narrow" title={t.overview.brandsTitle} help={t.overview.brandsHelp}>
+        <Panel
+          className="area-mileage"
+          title={t.overview.mileageTitle}
+          help={fill(t.overview.mileageHelp, { median: mileage.status === 'ready' && mileage.data.median_odometer !== null ? f.number(mileage.data.median_odometer) : '—' })}
+          table={
+            mileage.status === 'ready'
+              ? {
+                  caption: t.overview.mileageTitle,
+                  columns: [t.overview.mileageBand, t.overview.volume],
+                  numeric: [1],
+                  rows: mileage.data.buckets.map((b) => [
+                    `${f.number(b.odometer_range)}–${f.number(b.odometer_range + mileage.data.bucket_size)}`,
+                    f.number(b.count),
+                  ]),
+                }
+              : undefined
+          }
+        >
+          {mileage.status === 'ready' ? (
+            <Suspense fallback={<Loading height={240} />}>
+              <ColumnChart
+                data={mileage.data.buckets.map((b) => ({
+                  key: b.odometer_range,
+                  label: `${f.number(b.odometer_range / 1000)}k`,
+                  value: b.count,
+                  highlight: b.odometer_range === medianBand,
+                }))}
+                formatValue={f.number}
+                formatAxis={f.number}
+                valueName={t.overview.volume}
+                height={240}
+                labelEvery={5}
+              />
+            </Suspense>
+          ) : mileage.status === 'error' ? (
+            <ErrorState error={mileage.error} onRetry={mileage.retry} height={240} />
+          ) : (
+            <Loading height={240} />
+          )}
+        </Panel>
+
+        <Panel className="area-brands" title={t.overview.brandsTitle} help={t.overview.brandsHelp}>
           {brands.status === 'ready' ? (
             <BarList
               label={t.overview.brandsTitle}

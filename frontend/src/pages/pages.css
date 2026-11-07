@@ -1,18 +1,116 @@
+/* ---------------------------------------------------------------- overview
+   One grid whose shape follows the screen: 1 column on phones, 2 on laptops, 3 on standard
+   monitors, 4 on 2K and wider. Every panel keeps a named area, so the reading order is stable. */
+
+.overview-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'trend' 'brands' 'price' 'mileage' 'condition';
+}
+.area-trend { grid-area: trend; }
+.area-brands { grid-area: brands; }
+.area-price { grid-area: price; }
+.area-mileage { grid-area: mileage; }
+.area-condition { grid-area: condition; }
+
+@media (min-width: 900px) {
+  .overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      'trend trend'
+      'price mileage'
+      'brands condition';
+  }
+}
+@media (min-width: 1400px) {
+  .overview-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      'trend trend brands'
+      'price mileage condition';
+  }
+}
+@media (min-width: 1900px) {
+  .overview-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-areas:
+      'trend trend brands condition'
+      'price price mileage mileage';
+  }
+}
+@media (max-width: 860px) {
+  .overview-grid {
+    gap: 1rem;
+  }
+}
+
 /* ---------------------------------------------------------------- vehicle */
 
+.pickers {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
+}
 .picker {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 1rem;
 }
+.picker.is-secondary {
+  border-style: dashed;
+}
+.picker-title {
+  flex: 1 1 100%;
+  font-weight: 600;
+}
 .picker .field {
-  flex: 1 1 14rem;
+  flex: 1 1 11rem;
+}
+.picker-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 .picker-note {
   flex: 1 1 100%;
   font-size: 0.8125rem;
   color: var(--text-secondary);
+}
+
+.compare-head {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 34rem), 1fr));
+}
+.compare-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+.compare-title {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+/* legend key matching the charts: solid accent for the analyzed vehicle, dashed light for the other */
+.compare-key {
+  flex: 0 0 auto;
+  width: 2rem;
+  border-top: 3px dashed var(--data-light);
+}
+.compare-card.is-primary .compare-key {
+  border-top: 3px solid var(--accent);
+}
+.compare-model {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 1.3rem + 1.4vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.05;
+}
+.compare-card .kpi-band dl {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
 .vehicle-head {

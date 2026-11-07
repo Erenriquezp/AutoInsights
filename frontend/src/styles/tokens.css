@@ -65,7 +65,8 @@
   /* layout */
   --sidebar-expanded: 15.5rem;
   --sidebar-collapsed: 4.5rem;
-  --content-max: 82rem;
+  /* wide enough to use a 2K screen; centered beyond that */
+  --content-max: 120rem;
 
   /* motion */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);

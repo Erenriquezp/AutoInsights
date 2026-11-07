@@ -135,7 +135,7 @@ export function BarList({ items, label }: { items: BarItem[]; label: string }) {
 export function Loading({ height = 200 }: { height?: number }) {
   const { t } = useI18n();
   return (
-    <div className="state state-loading" style={{ minHeight: height }} role="status">
+    <div className="state state-loading" style={{ minHeight: `${height / 16}rem` }} role="status">
       <span className="spinner" aria-hidden="true" />
       <span>{t.states.loading}</span>
     </div>
@@ -146,7 +146,7 @@ export function ErrorState({ error, onRetry, height = 200 }: { error: unknown; o
   const { t } = useI18n();
   const network = error instanceof ApiError && error.code === 'network';
   return (
-    <div className="state state-error" style={{ minHeight: height }} role="alert">
+    <div className="state state-error" style={{ minHeight: `${height / 16}rem` }} role="alert">
       <p>{network ? t.states.errorNetwork : t.states.error}</p>
       {onRetry && (
         <button type="button" className="btn" onClick={onRetry}>

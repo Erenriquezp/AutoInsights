@@ -6,6 +6,9 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Fluid root size: 16px on laptops and standard monitors, up to 18px on 2K/4K screens.
+     Everything sized in rem (layout, charts, type) grows with it. */
+  font-size: clamp(100%, 0.4vw + 10.5px, 112.5%);
 }
 
 body {

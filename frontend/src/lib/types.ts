@@ -27,6 +27,12 @@ export interface PriceBucket {
   count: number;
 }
 
+export interface MileageDistribution {
+  bucket_size: number;
+  median_odometer: number | null;
+  buckets: { odometer_range: number; count: number }[];
+}
+
 export interface StateStats {
   state: string;
   count: number;
