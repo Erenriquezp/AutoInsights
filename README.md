@@ -56,6 +56,7 @@ flowchart LR
 | `GET /api/market/brands?limit=10` | Top brands by volume |
 | `GET /api/vehicles/depreciation?brand=&model=` | Depreciation curve for a model |
 | `GET /api/vehicles/mileage?brand=&model=` | Price vs. mileage scatter |
+| `POST /api/ask` · `GET /api/ask/examples` | Ask the data: a question in plain English answered with validated, visible SQL ([security](docs/security.md)) |
 
 Interactive docs at `http://localhost:8000/docs`.
 

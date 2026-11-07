@@ -4,11 +4,11 @@
 |---|---|
 | [Architecture](architecture.md) | How v1 is built and the v2 target on AWS |
 | [Data model](data-model.md) | Gold tables: columns, cleaning rules, how to regenerate |
+| [Security](security.md) | Threat model, the two layers around model-generated SQL, OWASP Top 10 for LLM apps |
 | [ADRs](adr/) | Architecture decision records: context, decision, alternatives, consequences |
 
 Coming with v2:
 
-- `security.md`: threat model, OWASP Top 10 for web and LLM applications
 - `deployment.md`: AWS bootstrap, Terraform, CI/CD, teardown and costs
 - `evaluation.md`: the text-to-SQL eval set and measured accuracy
 
