@@ -190,17 +190,17 @@ def test_top_brands_orders_by_volume_then_name(clean_sample):
     assert rows == [{"manufacturer": "ford", "count": 3}, {"manufacturer": "honda", "count": 1}]
 
 
-def test_build_aggregates_uses_the_collection_names_the_api_reads(clean_sample):
-    aggregates = transforms.build_aggregates(clean_sample)
+def test_build_gold_tables_names(clean_sample):
+    tables = transforms.build_gold_tables(clean_sample)
 
-    assert set(aggregates) == {
-        "precios_promedio",
-        "kpi_price_volume",
-        "kilometraje",
-        "estadisticas_mercado",
-        "distribucion_condicion",
-        "histograma_precios",
-        "distribucion_geo",
+    assert set(tables) == {
+        "prices_by_model_year",
+        "price_volume_by_year",
+        "mileage_points",
+        "market_stats",
+        "condition_distribution",
+        "price_histogram",
+        "geo_distribution",
         "top_brands",
     }
 
@@ -218,3 +218,16 @@ def test_extract_parses_multiline_descriptions(spark):
     assert "\n" in rows["2"]["description"]
     assert rows["2"]["price"] == 8_500
     assert rows["3"]["odometer"] == 120_000.0
+
+
+def test_write_gold_table_round_trip(spark, clean_sample, tmp_path):
+    from etl_job import write_gold_table
+
+    write_gold_table(transforms.market_stats(clean_sample), str(tmp_path), "market_stats")
+    write_gold_table(transforms.market_stats(clean_sample), str(tmp_path), "market_stats")  # rerun
+
+    parquet_files = list((tmp_path / "market_stats").glob("*.parquet"))
+    [stats] = as_dicts(spark.read.parquet(str(tmp_path / "market_stats")))
+
+    assert len(parquet_files) == 1
+    assert stats["total_vehicles"] == 5

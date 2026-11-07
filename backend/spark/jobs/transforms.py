@@ -159,15 +159,15 @@ def top_brands(df: DataFrame, limit: int = TOP_BRANDS) -> DataFrame:
     )
 
 
-def build_aggregates(df_clean: DataFrame) -> dict[str, DataFrame]:
-    """Every aggregate the API serves, keyed by its MongoDB collection name."""
+def build_gold_tables(df_clean: DataFrame) -> dict[str, DataFrame]:
+    """Every gold table the API serves, keyed by table name."""
     return {
-        "precios_promedio": prices_by_model_year(df_clean),
-        "kpi_price_volume": price_volume_by_year(df_clean),
-        "kilometraje": mileage_points(df_clean),
-        "estadisticas_mercado": market_stats(df_clean),
-        "distribucion_condicion": condition_distribution(df_clean),
-        "histograma_precios": price_histogram(df_clean),
-        "distribucion_geo": geo_distribution(df_clean),
+        "prices_by_model_year": prices_by_model_year(df_clean),
+        "price_volume_by_year": price_volume_by_year(df_clean),
+        "mileage_points": mileage_points(df_clean),
+        "market_stats": market_stats(df_clean),
+        "condition_distribution": condition_distribution(df_clean),
+        "price_histogram": price_histogram(df_clean),
+        "geo_distribution": geo_distribution(df_clean),
         "top_brands": top_brands(df_clean),
     }
