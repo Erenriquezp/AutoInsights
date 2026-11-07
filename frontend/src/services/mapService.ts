@@ -1,7 +1,6 @@
 import axios from 'axios';
+import { API_URL } from '../config';
 import type { GeoData, GoogleChartData } from '../types/mapTypes';
-
-const API_BASE_URL = 'http://localhost:8000/api';
 
 /**
  * Convierte datos de API a formato de Google Charts
@@ -29,7 +28,7 @@ export const transformToGoogleChartFormat = (apiData: GeoData[]): GoogleChartDat
  */
 export const fetchMapData = async (): Promise<GoogleChartData> => {
   try {
-    const response = await axios.get<GeoData[]>(`${API_BASE_URL}/market/geo`);
+    const response = await axios.get<GeoData[]>(`${API_URL}/market/geo`);
     return transformToGoogleChartFormat(response.data);
   } catch (error) {
     console.error('Error fetching map data:', error);

@@ -1,9 +1,6 @@
-// src/services/api.ts
 import axios from 'axios';
+import { API_URL } from '../config';
 import type { MarketStats, VehicleAnalysis, MileageData, ConditionData, PriceHistogramData } from '../types';
-
-// Asegúrate de que este puerto coincida con tu docker-compose (8000)
-const API_URL = 'http://localhost:8000/api';
 
 export interface BrandStat {
   manufacturer: string;
@@ -31,7 +28,7 @@ export const api = {
 
   // Obtener Modelos
   getModels: async (brand: string): Promise<string[]> => {
-    const response = await axios.get<string[]>(`${API_URL}/models/${brand}`);
+    const response = await axios.get<string[]>(`${API_URL}/models/${encodeURIComponent(brand)}`);
     return response.data;
   },
 

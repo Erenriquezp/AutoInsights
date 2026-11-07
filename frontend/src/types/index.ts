@@ -1,4 +1,6 @@
-// 1. Estadísticas Globales (Lo nuevo)
+// Response shapes of the AutoInsights API. Keep in sync with backend/services.py.
+
+// GET /api/market/stats
 export interface MarketStats {
   total_vehicles: number;
   total_brands: number;
@@ -10,38 +12,13 @@ export interface MarketStats {
   newest_year: number;
 }
 
-// 2. Respuesta de Análisis por Vehículo (Actualizado)
+// GET /api/vehicles/depreciation
 export interface VehicleAnalysis {
   vehicle: string;
-  summary: {
-    avg_price: number;
-    total_samples: number;
-    depreciation_text: string;
-    depreciation_value: number;
-  };
-  history: HistoryDataPoint[]; // Reutilizamos la interfaz 
+  summary: KPISummary;
+  history: HistoryDataPoint[];
 }
 
-// Alias usado por hooks/componentes
-export type AnalysisData = VehicleAnalysis;
-
-// 3. Puntos para Gráfica de Kilometraje
-export interface MileageData {
-  price: number;
-  odometer: number;
-}
-
-// 4. Alias para MileageDataPoint
-export type MileageDataPoint = MileageData;
-
-// 5. Punto de Historial para Gráficas
-export interface HistoryDataPoint {
-  year: number;
-  avg_price: number;
-  count: number;
-}
-
-// 6. KPI Data
 export interface KPISummary {
   avg_price: number;
   total_samples: number;
@@ -49,20 +26,29 @@ export interface KPISummary {
   depreciation_value: number;
 }
 
-// 7. Brand Volume
-export interface BrandVolume {
-  manufacturer: string;
-  total_vehicles: number;
+// One model year in a depreciation history
+export interface HistoryDataPoint {
+  year: number;
+  avg_price: number;
+  count: number;
 }
 
-// Distribución de condición de vehículos (para donut chart)
+// GET /api/vehicles/mileage
+export interface MileageData {
+  price: number;
+  odometer: number;
+}
+
+export type MileageDataPoint = MileageData;
+
+// GET /api/market/condition (donut chart)
 export interface ConditionData {
   condition: string;
   count: number;
   [key: string]: string | number;
 }
 
-// Histograma de precios (para bar chart)
+// GET /api/market/histogram (bar chart)
 export interface PriceHistogramData {
   price_range: number;
   count: number;
