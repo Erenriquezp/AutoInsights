@@ -4,7 +4,7 @@
 
 > Academic team project (Big Data course, Universidad Central del Ecuador, 2026).
 
-![AutoInsights dashboard](docs/dashboard.webp)
+![AutoInsights dashboard](docs/assets/dashboard.webp)
 
 ## Highlights
 
@@ -79,6 +79,10 @@ docker exec -it spark-master /opt/spark/bin/spark-submit /app/etl_job.py
 | API + docs | http://localhost:8000/docs |
 | Spark master UI | http://localhost:8080 |
 | Spark workers | http://localhost:8081 · http://localhost:8082 |
+
+## Data
+
+[Used Cars Dataset](https://www.kaggle.com/datasets/austinreese/craigslist-carstrucks-data) by Austin Reese: Craigslist US vehicle listings, published on Kaggle under CC0 (public domain). Download `vehicles.csv` from Kaggle; it is not stored in this repository.
 
 ## Team
 
