@@ -67,6 +67,28 @@ jobs:
       - name: Type-check and build
         run: npm run build
 
+  etl:
+    name: ETL (tests in the Spark image)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build Spark test image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: backend/spark
+          target: test
+          load: true
+          tags: autoinsights-spark-tests:ci
+          cache-from: type=gha,scope=spark-test
+          cache-to: type=gha,mode=max,scope=spark-test
+
+      - name: Run ETL tests with coverage
+        run: docker run --rm autoinsights-spark-tests:ci
+
   docker:
     name: Docker (compose config, images build)
     runs-on: ubuntu-latest
@@ -96,10 +118,11 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
-      - name: Build Spark image
+      - name: Build Spark runtime image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: backend/spark
+          target: runtime
           push: false
           cache-from: type=gha,scope=spark
           cache-to: type=gha,mode=max,scope=spark
