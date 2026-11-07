@@ -51,6 +51,10 @@ KNOWN_MODELS: dict[str, list[str]] = {
     "kia": ["optima", "sorento", "soul", "sportage", "forte", "rio", "stinger", "telluride"],
     "volkswagen": ["jetta", "passat", "tiguan", "golf", "beetle", "atlas", "cc"],
     "audi": ["a4", "a6", "q5", "q7", "a3", "a5", "q3", "tt"],
+    "mazda": [
+        "cx-30", "cx-3", "cx-5", "cx-7", "cx-9", "mx-5", "mazda2", "mazda3", "mazda5", "mazda6",
+        "tribute", "protege", "rx-8"
+    ],
 }
 # fmt: on
 
@@ -61,6 +65,26 @@ DIRECT_MAPPINGS: dict[str, str] = {
     "4-runner": "4runner",
     "pkup": "pickup",
     "p/u": "pickup",
+}
+
+# Spelling variants matched on word boundaries (safer than substrings): one model, one name
+REGEX_MAPPINGS: list[tuple[re.Pattern[str], str]] = [
+    (re.compile(r"\brav\s?4\b"), "rav4"),
+    (re.compile(r"\bland\s?cruiser\b"), "land cruiser"),
+    (re.compile(r"\bcrv\b"), "cr-v"),
+    (re.compile(r"\bhrv\b"), "hr-v"),
+    (re.compile(r"\b(\d)[\s-]?series\b"), r"\1 series"),
+    (re.compile(r"\bc[\s-]?max\b"), "c-max"),
+    (re.compile(r"\bcx[\s-]?(\d{1,2})\b"), r"cx-\1"),
+    (re.compile(r"\bmx[\s-]?5\b"), "mx-5"),
+    (re.compile(r"\bmazda\s(\d)\b"), r"mazda\1"),
+]
+
+# Other names sellers use for a brand, removed together with the brand in the fallback
+BRAND_ALIASES: dict[str, list[str]] = {
+    "mercedes-benz": ["mercedes-benz", "mercedes benz", "mercedes", "benz"],
+    "volkswagen": ["volkswagen", "vw"],
+    "chevrolet": ["chevrolet", "chevy"],
 }
 
 # Ford F-series written as "f150", "f 350", "f-450sd"... -> "f-150", "f-350", "f-450sd"
@@ -77,6 +101,8 @@ JUNK_WORDS: list[str] = [
     "4wd", "awd", "4x4", "auto", "manual", "cyl", "v6", "v8", "sedan", "suv", "coupe",
     "convertible", "hatchback", "pickup", "truck", "van", "wagon", "edition", "sport",
     "limited", "lx", "ex", "se", "le", "xlt", "lariat",
+    # drivetrain and trim names that follow the model
+    "4matic", "xdrive", "quattro", "touring", "signature", "premium",
 ]
 # fmt: on
 
@@ -105,6 +131,8 @@ def clean_model_name(manufacturer: str | None, raw_model: str | None) -> str:
     for wrong, right in DIRECT_MAPPINGS.items():
         if wrong in text:
             text = text.replace(wrong, right)
+    for pattern, replacement in REGEX_MAPPINGS:
+        text = pattern.sub(replacement, text)
     text = F_SERIES_PATTERN.sub(r"f-\1", text)
     if brand == "ford":
         text = E_SERIES_PATTERN.sub(r"e-\1", text)
@@ -118,8 +146,8 @@ def clean_model_name(manufacturer: str | None, raw_model: str | None) -> str:
         return "f-250"
 
     # Fallback: drop the brand as a whole word, cut at the first noise word, keep alphanumerics
-    if brand:
-        text = re.sub(rf"\b{re.escape(brand)}\b", "", text)
+    for name in BRAND_ALIASES.get(brand, [brand] if brand else []):
+        text = re.sub(rf"\b{re.escape(name)}\b", "", text)
     text = JUNK_PATTERN.sub("", text.strip())
     text = NON_ALPHANUMERIC_PATTERN.sub("", text)
 

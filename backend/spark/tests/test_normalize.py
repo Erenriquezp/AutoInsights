@@ -20,7 +20,8 @@ from normalize import clean_model_name
         ("toyota", "4-runner", "4runner"),
         # fallback: brand removed, cut at the first noise word, first two tokens
         ("tesla", "model 3 long range", "model 3"),
-        ("mazda", "mazda cx-5 touring awd", "cx-5 touring"),
+        ("acura", "acura rdx technology awd", "rdx technology"),
+        ("mazda", "mazda cx-5 touring awd", "cx-5"),
         ("acura", "tlx", "tlx"),
         ("lexus", "rx 350!!", "rx 350"),
         # nothing usable
@@ -65,7 +66,8 @@ def test_noise_word_inside_a_hyphenated_token_drops_the_whole_token(manufacturer
 @pytest.mark.parametrize(
     ("manufacturer", "raw", "expected"),
     [
-        ("mazda", "2014 mazda3 grand touring", "mazda3 grand"),
+        ("mazda", "2014 mazda3 grand touring", "mazda3"),
+        ("lincoln", "2015 mkz hybrid", "mkz hybrid"),
         ("acura", "2016 mdx", "mdx"),
         ("lincoln", "2016", "other"),
     ],
@@ -84,8 +86,34 @@ def test_result_never_starts_or_ends_with_a_hyphen():
         ("ford", "e350 cargo van", "e-350"),
         ("ford", "e 250 super duty", "e-250"),
         ("ford", "e-450 cutaway", "e-450"),
-        ("mercedes-benz", "e350 4matic", "e350 4matic"),  # an E-Class, not a Ford E-Series
+        ("mercedes-benz", "e350 4matic", "e350"),  # an E-Class, not a Ford E-Series
     ],
 )
 def test_ford_e_series_spellings_are_unified(manufacturer, raw, expected):
+    assert clean_model_name(manufacturer, raw) == expected
+
+
+@pytest.mark.parametrize(
+    ("manufacturer", "raw", "expected"),
+    [
+        ("toyota", "rav 4 xle", "rav4"),
+        ("toyota", "landcruiser", "land cruiser"),
+        ("honda", "crv exl", "cr-v"),
+        ("honda", "hrv lx", "hr-v"),
+        ("bmw", "3-series 328i", "3 series"),
+        ("bmw", "5series", "5 series"),
+        ("ford", "cmax hybrid", "c-max hybrid"),
+        ("ford", "c max energi", "c-max energi"),
+        ("mazda", "cx9 touring", "cx-9"),
+        ("mazda", "cx 5 grand touring", "cx-5"),
+        ("mazda", "mazda 3 hatchback", "mazda3"),
+        ("mazda", "mx5 miata", "mx-5"),
+        ("mercedes-benz", "benz c300 4matic", "c300"),
+        ("mercedes-benz", "mercedes benz e350", "e350"),
+        ("mercedes-benz", "mercedes-benz gle 350", "gle"),
+        ("volkswagen", "vw jetta", "jetta"),
+        ("chevrolet", "chevy cruze", "cruze"),
+    ],
+)
+def test_spelling_variants_merge_into_one_model(manufacturer, raw, expected):
     assert clean_model_name(manufacturer, raw) == expected
