@@ -132,6 +132,23 @@ def test_price_volume_by_year_is_sorted(clean_sample):
     assert rows[2] == {"year": 2018, "avg_price_year": 25_000.5, "volume_year": 2}
 
 
+@pytest.mark.parametrize(
+    ("odometer", "kept"),
+    [
+        (None, False),
+        (1.0, False),
+        (99.0, False),
+        (100.0, True),
+        (499_999.0, True),
+        (500_000.0, False),
+    ],
+)
+def test_mileage_points_odometer_bounds(spark, odometer, kept):
+    df = frame(spark, listing(odometer=odometer))
+
+    assert (transforms.mileage_points(df).count() == 1) is kept
+
+
 def test_mileage_points_drop_missing_and_implausible_odometers(clean_sample):
     rows = as_dicts(transforms.mileage_points(clean_sample))
 

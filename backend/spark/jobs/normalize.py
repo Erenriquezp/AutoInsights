@@ -8,7 +8,8 @@ KNOWN_MODELS: dict[str, list[str]] = {
     "ford": [
         "f-150", "f150", "mustang", "explorer", "escape", "focus", "fusion",
         "ranger", "edge", "expedition", "taurus", "fiesta", "flex", "bronco",
-        "f-250", "f250", "f-350", "f-450", "f-550", "transit", "econoline", "excursion"
+        "f-250", "f250", "f-350", "f-450", "f-550", "transit", "econoline", "excursion",
+        "e-150", "e-250", "e-350", "e-450"
     ],
     "chevrolet": [
         "silverado", "malibu", "equinox", "cruze", "impala", "tahoe", "suburban",
@@ -64,6 +65,8 @@ DIRECT_MAPPINGS: dict[str, str] = {
 
 # Ford F-series written as "f150", "f 350", "f-450sd"... -> "f-150", "f-350", "f-450sd"
 F_SERIES_PATTERN = re.compile(r"\bf[\s-]?([1-7]50)(?!\d)")
+# Ford E-Series vans the same way; Ford only, since "e350" is also a Mercedes-Benz E-Class
+E_SERIES_PATTERN = re.compile(r"\be[\s-]?([1-4]50)(?!\d)")
 # A leading model year in the model text ("2014 mazda3") is not part of the model
 LEADING_YEAR_PATTERN = re.compile(r"^(19|20)\d{2}\b\s*")
 
@@ -103,6 +106,8 @@ def clean_model_name(manufacturer: str | None, raw_model: str | None) -> str:
         if wrong in text:
             text = text.replace(wrong, right)
     text = F_SERIES_PATTERN.sub(r"f-\1", text)
+    if brand == "ford":
+        text = E_SERIES_PATTERN.sub(r"e-\1", text)
 
     for model in _CATALOG_BY_LENGTH.get(brand, []):
         if model in text:

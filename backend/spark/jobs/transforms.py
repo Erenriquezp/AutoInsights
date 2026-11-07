@@ -6,10 +6,11 @@ from pyspark.sql.types import DoubleType, IntegerType, StringType, StructField, 
 
 from normalize import clean_model_name
 
-# Validation ranges (lower bounds exclusive; year upper bound inclusive)
+# Validation ranges (price and year: lower bound exclusive, year upper bound inclusive)
 PRICE_RANGE = (500, 1_000_000)
 YEAR_RANGE = (1990, 2025)
-ODOMETER_RANGE = (0, 500_000)
+# Readings under 100 miles are mostly placeholders (1, 2, 5, 10...), not new cars
+ODOMETER_RANGE = (100, 500_000)  # lower bound inclusive, upper exclusive
 STATE_LENGTH = 2
 PRICE_BUCKET_SIZE = 2_000
 MAX_PRICE_HISTOGRAM = 100_000
@@ -98,7 +99,7 @@ def mileage_points(df: DataFrame) -> DataFrame:
     """Price vs. odometer points with a plausible odometer reading."""
     return df.filter(
         F.col("odometer").isNotNull()
-        & (F.col("odometer") > ODOMETER_RANGE[0])
+        & (F.col("odometer") >= ODOMETER_RANGE[0])
         & (F.col("odometer") < ODOMETER_RANGE[1])
     ).select("manufacturer", "model", "odometer", "price")
 

@@ -76,3 +76,16 @@ def test_leading_model_year_is_not_part_of_the_model(manufacturer, raw, expected
 
 def test_result_never_starts_or_ends_with_a_hyphen():
     assert clean_model_name("mazda", "- 3 -") == "3"
+
+
+@pytest.mark.parametrize(
+    ("manufacturer", "raw", "expected"),
+    [
+        ("ford", "e350 cargo van", "e-350"),
+        ("ford", "e 250 super duty", "e-250"),
+        ("ford", "e-450 cutaway", "e-450"),
+        ("mercedes-benz", "e350 4matic", "e350 4matic"),  # an E-Class, not a Ford E-Series
+    ],
+)
+def test_ford_e_series_spellings_are_unified(manufacturer, raw, expected):
+    assert clean_model_name(manufacturer, raw) == expected
