@@ -1,6 +1,6 @@
 # 0005. Keep Spark for the ETL, run locally
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-07
 
 ## Context

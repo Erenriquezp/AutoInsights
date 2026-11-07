@@ -1,6 +1,6 @@
 # 0001. Serve gold tables as Parquet with DuckDB instead of MongoDB
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-07
 
 ## Context
@@ -33,6 +33,5 @@ current response shapes.
 - The repository interface lets the API be tested against in-memory data.
 - Data refresh means re-running the ETL and uploading files; acceptable for a static dataset.
 
-## Open questions
-
-- Keep MongoDB in local Compose as the v1 path, or remove it once contract tests pass?
+- **MongoDB is retired** from the stack once the API returns the same data from DuckDB. The v1
+  MongoDB version stays available at the `v1.0.0` tag.

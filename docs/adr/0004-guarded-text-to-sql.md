@@ -1,6 +1,6 @@
 # 0004. Text-to-SQL behind a validator, not a chatbot
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-07
 
 ## Context
@@ -46,6 +46,6 @@ The model only proposes SQL. Code validates it and runs it; the UI shows the SQL
 - Maps to OWASP Top 10 for LLM applications (prompt injection, improper output handling), documented
   in `docs/security.md`.
 
-## Open questions
+## Deferred
 
-- Which Groq and Gemini models: chosen by eval-set accuracy, with limits checked on the day.
+- The Groq and Gemini models are chosen by eval-set accuracy, with limits checked on the day.

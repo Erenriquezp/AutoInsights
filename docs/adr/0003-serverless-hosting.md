@@ -1,6 +1,6 @@
 # 0003. Serverless hosting on AWS within always-free limits
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-07
 
 ## Context
@@ -41,7 +41,10 @@ allowances, not on credits.
 - DuckDB plus dependencies must fit the Lambda zip limit (250 MB unzipped); a container image is the fallback.
 - A full `terraform destroy` removes everything, so the demo can be taken down at any time.
 
-## Open questions
+## Deferred to the AWS bootstrap
+
+Settled when the account is reviewed, before any resource is created:
+
 
 - Account plan: an existing account, or a new one that moves to the Paid plan before the 6 months end.
 - AWS region.
