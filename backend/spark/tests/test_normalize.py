@@ -117,3 +117,19 @@ def test_ford_e_series_spellings_are_unified(manufacturer, raw, expected):
 )
 def test_spelling_variants_merge_into_one_model(manufacturer, raw, expected):
     assert clean_model_name(manufacturer, raw) == expected
+
+
+@pytest.mark.parametrize(
+    ("manufacturer", "raw", "expected"),
+    [
+        ("mazda", "3", "mazda3"),
+        ("mazda", "3 i sport", "mazda3"),
+        ("mazda", "6 grand", "mazda6"),
+        ("mercedes-benz", "c 300", "c300"),
+        ("mercedes-benz", "benz clk 320", "clk320"),
+        ("mercedes-benz", "e 350 coupe", "e350"),
+        ("ford", "e 350", "e-350"),  # Ford keeps the E-Series spelling
+    ],
+)
+def test_brand_specific_model_numbers(manufacturer, raw, expected):
+    assert clean_model_name(manufacturer, raw) == expected

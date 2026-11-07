@@ -80,6 +80,12 @@ REGEX_MAPPINGS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\bmazda\s(\d)\b"), r"mazda\1"),
 ]
 
+# Brand-specific model numbers: Mazda's bare "3" is the Mazda3; Mercedes writes "c 300" for c300
+BRAND_REGEX_MAPPINGS: dict[str, list[tuple[re.Pattern[str], str]]] = {
+    "mazda": [(re.compile(r"^(?:mazda\s?)?([2356])\b"), r"mazda\1")],
+    "mercedes-benz": [(re.compile(r"\b([a-z]{1,3})\s(\d{3})\b"), r"\1\2")],
+}
+
 # Other names sellers use for a brand, removed together with the brand in the fallback
 BRAND_ALIASES: dict[str, list[str]] = {
     "mercedes-benz": ["mercedes-benz", "mercedes benz", "mercedes", "benz"],
@@ -132,6 +138,8 @@ def clean_model_name(manufacturer: str | None, raw_model: str | None) -> str:
         if wrong in text:
             text = text.replace(wrong, right)
     for pattern, replacement in REGEX_MAPPINGS:
+        text = pattern.sub(replacement, text)
+    for pattern, replacement in BRAND_REGEX_MAPPINGS.get(brand, []):
         text = pattern.sub(replacement, text)
     text = F_SERIES_PATTERN.sub(r"f-\1", text)
     if brand == "ford":
