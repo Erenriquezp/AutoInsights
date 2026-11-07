@@ -4,6 +4,7 @@
 #   docker compose up -d --build                  # development (Vite dev server on :5173)
 #   docker compose --profile prod up -d --build   # adds the production build on :4173
 #   docker compose run --rm spark-tests           # ETL tests inside the Spark image
+#   bash infra/check.sh                           # Terraform checks (terraform, tflint, trivy)
 #
 # Ports are bound to 127.0.0.1 so nothing is exposed to the local network.
 # Optional overrides go in .env (see .env.example).
@@ -126,6 +127,43 @@ services:
     networks:
       - bigdata_net
 
+  # ---------------------------------------------------------------- infrastructure checks
+  # Pinned by digest, no AWS credentials passed in: bash infra/check.sh runs all of them
+  terraform:
+    profiles: ["infra"]
+    image: hashicorp/terraform:1.17.1@sha256:a5d5a5a892c98f60fcbfa81eac2a40fc19e7b3fa7719bccae10ff6111d22524a
+    working_dir: /infra
+    environment:
+      - TF_IN_AUTOMATION=1
+      - TF_INPUT=0
+      - TF_PLUGIN_CACHE_DIR=/cache/terraform
+    volumes:
+      - ./infra:/infra
+      - infra-cache:/cache
+
+  tflint:
+    profiles: ["infra"]
+    image: ghcr.io/terraform-linters/tflint:v0.65.0@sha256:2788f4d4fc663c0e953b011b01bf443fe5bfce7587ee916e588e6057b85d6359
+    working_dir: /infra
+    environment:
+      - TFLINT_PLUGIN_DIR=/cache/tflint
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-} # optional, avoids GitHub rate limits on plugin download
+    volumes:
+      - ./infra:/infra
+      - infra-cache:/cache
+
+  trivy:
+    profiles: ["infra"]
+    image: aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+    environment:
+      - TRIVY_CACHE_DIR=/cache/trivy
+    volumes:
+      - ./infra:/infra:ro
+      - infra-cache:/cache
+
 networks:
   bigdata_net:
     driver: bridge
+
+volumes:
+  infra-cache:

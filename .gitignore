@@ -30,6 +30,9 @@ htmlcov/
 *.tfstate
 *.tfstate.*
 *.tfplan
+*.tfvars
+!*.tfvars.example
+backend.hcl
 crash.log
 
 # Logs and build output
