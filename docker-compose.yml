@@ -1,52 +1,52 @@
-# docker-compose.yml
-# Versión final para demostración de escalabilidad (2 Nodos)
+# Local stack: MongoDB, a Spark cluster (1 master + 2 workers), the API and the dashboard.
+#
+#   docker compose up -d --build                  # development (Vite dev server on :5173)
+#   docker compose --profile prod up -d --build   # adds the production build on :4173
+#
+# Ports are bound to 127.0.0.1 so nothing is exposed to the local network.
+# Optional overrides go in .env (see .env.example).
 
 services:
-  # ----------------------------------------------------------------
-  # 1. CAPA DE DATOS (MongoDB)
-  # ----------------------------------------------------------------
+  # ---------------------------------------------------------------- data
   mongodb:
     image: mongo:6.0
     container_name: autoinsights_mongo
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - bigdata_net
 
-  # ----------------------------------------------------------------
-  # 2. CLÚSTER DE PROCESAMIENTO (SPARK) (Master + 2 Workers)
-  # Aquí está la magia de la escalabilidad.
-  # Usamos 'build' para que incluya tus librerías (pymongo) definidas en el Dockerfile.
-  # ----------------------------------------------------------------
-  # 1. SPARK MASTER (El Jefe - Se mantiene vivo esperando órdenes)
+  # ---------------------------------------------------------------- processing
   spark-master:
-    build: 
+    build:
       context: ./backend/spark
-      dockerfile: Dockerfile
     container_name: spark-master
     ports:
-      - "8080:8080" # Panel de Control Web
-      - "7077:7077" # Puerto Interno
+      - "127.0.0.1:8080:8080" # master web UI
+      - "127.0.0.1:7077:7077" # cluster port
     volumes:
-      - ./backend/data:/opt/spark/data                    # Datos
-      - ./backend/spark/jobs/etl_job.py:/app/etl_job.py   # Script ETL
+      - ./backend/data:/opt/spark/data
+      - ./backend/spark/jobs/etl_job.py:/app/etl_job.py
     networks:
       - bigdata_net
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
 
-  # 2. WORKER 1 (Empleado 1)
   spark-worker-1:
-    build: 
+    build:
       context: ./backend/spark
-      dockerfile: Dockerfile
     container_name: spark-worker-1
     environment:
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_CORES=1
     ports:
-      - "8081:8081" # Panel Web Worker 1
+      - "127.0.0.1:8081:8081"
     volumes:
       - ./backend/data:/opt/spark/data
     depends_on:
@@ -55,17 +55,15 @@ services:
       - bigdata_net
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
 
-  # 3. WORKER 2 (Empleado 2)
   spark-worker-2:
-    build: 
+    build:
       context: ./backend/spark
-      dockerfile: Dockerfile
     container_name: spark-worker-2
     environment:
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_CORES=1
     ports:
-      - "8082:8081" # Panel Web Worker 2 (Mapeado a puerto distinto)
+      - "127.0.0.1:8082:8081"
     volumes:
       - ./backend/data:/opt/spark/data
     depends_on:
@@ -74,42 +72,58 @@ services:
       - bigdata_net
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
 
-  # ----------------------------------------------------------------
-  # 3. CAPA DE SERVICIO (Backend API)
-  # ----------------------------------------------------------------
+  # ---------------------------------------------------------------- API
   backend:
     build: ./backend
     container_name: autoinsights_api
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
-      - ./backend:/app 
+      - ./backend:/app # live code for --reload in development
     environment:
-      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_URI=${MONGO_URI:-mongodb://mongodb:27017}
+      - MONGO_DATABASE=${MONGO_DATABASE:-autoinsights}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:4173}
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     networks:
       - bigdata_net
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
-  # ----------------------------------------------------------------
-  # 4. CAPA DE PRESENTACIÓN (Frontend)
-  # ----------------------------------------------------------------
+  # ---------------------------------------------------------------- dashboard
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      target: dev
     container_name: autoinsights_ui
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8000/api}
     depends_on:
       - backend
     networks:
       - bigdata_net
-    stdin_open: true
+
+  frontend-prod:
+    profiles: ["prod"]
+    build:
+      context: ./frontend
+      target: prod
+      args:
+        VITE_API_URL: /api
+    container_name: autoinsights_ui_prod
+    ports:
+      - "127.0.0.1:4173:80"
+    depends_on:
+      - backend
+    networks:
+      - bigdata_net
 
 volumes:
   mongo_data:

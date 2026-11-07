@@ -1,20 +1,24 @@
-# Usamos Node.js versión LTS
-FROM node:22-alpine
+# Multi-stage image. Targets:
+#   dev   Vite dev server with hot reload (docker compose default)
+#   prod  static build served by nginx (docker compose --profile prod)
 
-# Directorio de trabajo
+FROM node:24-alpine AS deps
 WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
 
-# Copiamos los archivos de definición de paquetes primero (para aprovechar caché)
-COPY package.json package-lock.json* ./
-
-# Instalamos dependencias
-RUN npm install
-
-# Copiamos el resto del código fuente
+FROM deps AS dev
 COPY . .
-
-# Exponemos el puerto
 EXPOSE 5173
-
-# Comando de inicio
 CMD ["npm", "run", "dev", "--", "--host"]
+
+FROM deps AS build
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=${VITE_API_URL}
+COPY . .
+RUN npm run build
+
+FROM nginx:stable-alpine AS prod
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80

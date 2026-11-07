@@ -1,18 +1,19 @@
-# Usamos una imagen ligera de Python
-FROM python:3.9-slim
+FROM python:3.13-slim
 
-# Directorio de trabajo dentro del contenedor
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
 WORKDIR /app
 
-# Instalamos las dependencias del sistema necesarias
-RUN apt-get update && apt-get install -y gcc && rm -rf /var/lib/apt/lists/*
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
-# Copiamos e instalamos librerías python
-# (FastAPI, Uvicorn para el servidor, PyMongo para la base de datos)
-RUN pip install fastapi uvicorn pymongo python-multipart
+COPY *.py ./
 
-# El código se montará vía volumen en docker-compose, 
-# así que no necesitamos copiarlo aquí para desarrollo.
+RUN useradd --create-home --uid 1000 app
+USER app
 
-# Comando por defecto (se sobrescribe en docker-compose)
+EXPOSE 8000
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

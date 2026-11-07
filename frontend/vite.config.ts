@@ -1,15 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
+// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
     watch: {
-      usePolling: true, // Importante para Docker en Windows
+      usePolling: true, // file events do not cross Docker bind mounts on Windows
     },
-    host: true, // Necesario para exponer el contenedor
+    host: true, // listen on all interfaces so the container port is reachable
     strictPort: true,
     port: 5173,
-  }
+  },
 })
