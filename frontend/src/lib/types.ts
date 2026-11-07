@@ -85,4 +85,5 @@ export interface AskAnswer {
   rows: (string | number | null)[][];
   chart: { type: ChartType; x: string | null; y: string | null };
   provider: string;
+  model: string;
 }

@@ -78,6 +78,7 @@ export default function AskPage() {
             {status.kind === 'asking' ? t.ask.asking : t.ask.submit}
           </button>
         </form>
+        <p className="ask-notice">{t.ask.notice}</p>
         {examples.status === 'ready' && examples.data.length > 0 && (
           <div className="ask-examples">
             <p>{t.ask.examples}</p>
@@ -155,7 +156,11 @@ function Answer({ answer, fmt, copied, onCopy }: { answer: AskAnswer; fmt: (v: s
         <ul className="ask-guard">
           <li>{t.ask.guardReadOnly}</li>
           <li>{t.ask.guardLimits}</li>
-          <li>{fill(t.ask.provider, { provider: answer.provider === 'fake' ? t.ask.providerFake : answer.provider })}</li>
+          <li>
+            {fill(t.ask.provider, {
+              provider: answer.provider === 'fake' ? t.ask.providerFake : `${t.ask.providerNames[answer.provider] ?? answer.provider} (${answer.model})`,
+            })}
+          </li>
         </ul>
       </Panel>
     </div>

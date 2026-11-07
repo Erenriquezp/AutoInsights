@@ -145,9 +145,13 @@ const es: Messages = {
     guardLimits: 'Los resultados se limitan a 100 filas y 3 segundos.',
     provider: 'Respondido por: {provider}',
     providerFake: 'el modelo de demostración sin conexión (solo responde las preguntas de ejemplo)',
+    providerNames: { groq: 'Groq', gemini: 'Google Gemini' },
+    notice: 'Las preguntas se envían a un modelo de lenguaje de terceros (Groq o Google Gemini) para escribir el SQL. No incluyas datos personales.',
     tooShort: 'Escribe al menos 3 caracteres.',
     errors: {
       provider_unavailable: 'El modelo de lenguaje no está disponible ahora. Prueba una de las preguntas de ejemplo o inténtalo más tarde.',
+      provider_busy: 'El modelo de lenguaje está saturado (límite del plan gratuito). Vuelve a intentarlo en un minuto.',
+      rate_limited: 'Has hecho muchas preguntas en poco tiempo. Espera un minuto y vuelve a intentarlo.',
       query_timeout: 'La consulta tardó demasiado y se detuvo. Prueba con una pregunta más concreta.',
       query_failed: 'La consulta no se pudo ejecutar sobre los datos. Prueba a reformular la pregunta.',
       rejected: 'La consulta generada se bloqueó porque no era una consulta de solo lectura sobre las tablas publicadas.',

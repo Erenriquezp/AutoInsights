@@ -178,6 +178,12 @@
   min-height: 3rem;
   font-size: 1rem;
 }
+.ask-notice {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  max-width: 80ch;
+}
 .ask-examples {
   margin-top: 1rem;
   font-size: 0.875rem;

@@ -145,9 +145,13 @@ const en = {
     guardLimits: 'Results are limited to 100 rows and 3 seconds.',
     provider: 'Answered by: {provider}',
     providerFake: 'the offline demo model (answers the example questions only)',
+    providerNames: { groq: 'Groq', gemini: 'Google Gemini' } as Record<string, string>,
+    notice: 'Questions are sent to a third-party language model (Groq or Google Gemini) to write the SQL. Do not include personal data.',
     tooShort: 'Write at least 3 characters.',
     errors: {
       provider_unavailable: 'The language model is not available right now. Try one of the example questions, or try again later.',
+      provider_busy: 'The language model is busy (free-tier limit reached). Try again in a minute.',
+      rate_limited: 'You have asked a lot of questions in a short time. Wait a minute, then try again.',
       query_timeout: 'The query took too long and was stopped. Try a narrower question.',
       query_failed: 'The query could not run on the data. Try rephrasing the question.',
       rejected: 'The generated query was blocked because it was not a safe, read-only query on the published tables.',
