@@ -95,6 +95,19 @@ jobs:
       - name: Run ETL tests with coverage
         run: docker run --rm autoinsights-spark-tests:ci
 
+  infra:
+    name: Infrastructure (fmt, validate, tflint, trivy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Same pinned images as locally; no AWS credentials exist in this job
+      - name: Terraform static checks
+        run: bash infra/check.sh
+        env:
+          GITHUB_TOKEN: ${{ github.token }} # read-only, for the tflint plugin download
+
   docker:
     name: Docker (compose config, images build)
     runs-on: ubuntu-latest
