@@ -6,7 +6,7 @@ from decimal import Decimal
 import pytest
 
 from ask.guard import validate_sql
-from ask.providers import EXAMPLES, FakeProvider, ProviderError
+from ask.providers import EXAMPLES, FakeProvider, ProviderError, ProviderReply
 from evaluation.compare import results_match
 from evaluation.questions import Question, load_questions
 from evaluation.run_eval import evaluate, format_report, main
@@ -49,7 +49,11 @@ def test_the_example_questions_are_part_of_the_set():
         ([(0.0,)], [(0.004,)], False, True),  # absolute tolerance near zero
         ([(27.29,)], [(Decimal("27.3"),)], False, True),
         ([("Ford",)], [("ford",)], False, True),  # case-insensitive text
-        ([("ford", 10)], [("ford", 10, 99)], False, False),  # extra column
+        ([("ford", 10)], [("ford", 10, 99)], False, True),  # extra context column
+        ([("ca",)], [("ca", 40345)], False, True),
+        ([("ca",)], [(40345, "tx")], False, False),  # extra column, wrong answer
+        ([("a", 1), ("b", 2)], [(9, "a", 1), (8, "b", 2)], True, True),
+        ([("a", 1), ("b", 2)], [(9, "b", 2), (8, "a", 1)], True, False),
         ([("ford", 10)], [("ford", 10), ("kia", 1)], False, False),  # extra row
         ([("ford", 10), ("ford", 10)], [("ford", 10)], False, False),  # duplicates count
         ([("ford", 10)], [("ford", "10")], False, False),  # number vs text
@@ -102,7 +106,7 @@ class AnswerBook:
         reply = self.replies[question]
         if isinstance(reply, Exception):
             raise reply
-        return reply
+        return ProviderReply(reply, self.name, "book-model")
 
 
 @pytest.fixture(scope="module")
@@ -167,3 +171,12 @@ def test_main_writes_a_report_and_enforces_min_accuracy(gold_dir, tmp_path, monk
     assert ok == 0
     assert below == 1  # the fake provider only knows TOP: 50 %
     assert json.loads(report_path.read_text())["counts"]["correct"] == 1
+
+
+def test_rejected_answers_keep_the_raw_reply(gold_dir):
+    provider = AnswerBook({HARD.text: "Sure! Here is the query: DROP TABLE top_brands"})
+
+    [result] = evaluate([HARD], GoldRepository(gold_dir), provider).results
+
+    assert result.outcome == "rejected"
+    assert result.reply.startswith("Sure!")

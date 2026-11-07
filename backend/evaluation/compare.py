@@ -5,11 +5,13 @@ Two results match when they have the same rows, where:
 - row order matters only for questions marked `ordered` (rankings, time series);
 - numbers match within 0.5 % (or 0.01 near zero), since models round differently;
 - text is compared case-insensitively;
-- extra rows or extra columns are a mismatch.
+- extra columns are allowed when the expected columns are among them (a model that answers
+  "which state" with the state AND its count is right), but extra rows are a mismatch.
 """
 
 import math
 from decimal import Decimal
+from itertools import permutations
 from typing import Any
 
 REL_TOL = 0.005
@@ -49,6 +51,18 @@ def _rows_match(expected: tuple, actual: tuple) -> bool:
 def results_match(expected: list[tuple], actual: list[tuple], *, ordered: bool) -> bool:
     if len(expected) != len(actual):
         return False
+    width = len(expected[0]) if expected else 0
+    extra = len(actual[0]) - width if actual else 0
+    if extra > 0:
+        # try every choice of the actual columns that could carry the expected ones
+        return any(
+            _same_rows(expected, [tuple(row[i] for i in cols) for row in actual], ordered)
+            for cols in permutations(range(len(actual[0])), width)
+        )
+    return _same_rows(expected, actual, ordered)
+
+
+def _same_rows(expected: list[tuple], actual: list[tuple], ordered: bool) -> bool:
     if ordered:
         return all(_rows_match(e, a) for e, a in zip(expected, actual, strict=True))
 

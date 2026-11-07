@@ -1,0 +1,290 @@
+{
+  "provider": "groq",
+  "run_at": "2026-11-07T22:48:09+00:00",
+  "total": 30,
+  "counts": {
+    "correct": 29,
+    "wrong": 0,
+    "rejected": 0,
+    "error": 1
+  },
+  "accuracy": 0.967,
+  "rejection_rate": 0.0,
+  "accuracy_by_level": {
+    "easy": 1.0,
+    "medium": 1.0,
+    "hard": 0.8
+  },
+  "results": [
+    {
+      "id": "top-brands",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT manufacturer, count FROM top_brands ORDER BY count DESC LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 486.9
+    },
+    {
+      "id": "price-by-year",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT year, avg_price_year FROM price_volume_by_year ORDER BY year LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 652.7
+    },
+    {
+      "id": "priciest-states",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT state, avg_price FROM geo_distribution ORDER BY avg_price DESC LIMIT 10",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 613.8
+    },
+    {
+      "id": "listings-per-condition",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT condition, count FROM condition_distribution ORDER BY count DESC LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 418.7
+    },
+    {
+      "id": "camry-median-price",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT QUANTILE_CONT(price, 0.5 ORDER BY price) AS median_price FROM mileage_points WHERE manufacturer = 'toyota' AND model = 'camry' LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 786.6
+    },
+    {
+      "id": "top-ford-models",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT model, SUM(count) AS total_listings FROM prices_by_model_year WHERE manufacturer = 'ford' GROUP BY model ORDER BY total_listings DESC LIMIT 10",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 700.3
+    },
+    {
+      "id": "total-vehicles",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT total_vehicles FROM market_stats LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 515.3
+    },
+    {
+      "id": "avg-market-price",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT avg_market_price FROM market_stats LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 713.5
+    },
+    {
+      "id": "year-range",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT MIN(year) AS oldest_year, MAX(year) AS newest_year FROM price_volume_by_year LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 644.3
+    },
+    {
+      "id": "brand-count",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT total_brands FROM market_stats LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 570.7
+    },
+    {
+      "id": "busiest-state",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT state, count FROM geo_distribution ORDER BY count DESC LIMIT 1",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 548.6
+    },
+    {
+      "id": "california-listings",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT count FROM geo_distribution WHERE state = 'ca' LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 439.3
+    },
+    {
+      "id": "texas-avg-price",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT avg_price FROM geo_distribution WHERE state = 'tx' LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 452.1
+    },
+    {
+      "id": "quietest-states",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT state, count FROM geo_distribution ORDER BY count ASC LIMIT 5",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 600.4
+    },
+    {
+      "id": "excellent-condition",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT count FROM condition_distribution WHERE condition = 'excellent' LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 507.6
+    },
+    {
+      "id": "unknown-condition-share",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT ROUND(100.0 * SUM(CASE WHEN condition = 'unknown' THEN count ELSE 0 END) / SUM(count), 2) AS percent_unknown FROM condition_distribution LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 627.9
+    },
+    {
+      "id": "busiest-model-year",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT year, volume_year AS listings FROM price_volume_by_year ORDER BY volume_year DESC LIMIT 1",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 493.8
+    },
+    {
+      "id": "price-2015",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT avg_price_year AS average_price FROM price_volume_by_year WHERE year = 2015 LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 623.6
+    },
+    {
+      "id": "under-10k",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT SUM(count) AS listings_under_10000 FROM price_histogram WHERE price_range < 10000 LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 1050.0
+    },
+    {
+      "id": "busiest-price-range",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT price_range, count FROM price_histogram ORDER BY count DESC LIMIT 1",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 462.6
+    },
+    {
+      "id": "f150-recent-prices",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT year, avg_price FROM prices_by_model_year WHERE manufacturer = 'ford' AND model = 'f-150' AND year >= 2015 ORDER BY year ASC LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 646.3
+    },
+    {
+      "id": "civic-listings",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT SUM(count) AS total_honda_civic_listings FROM prices_by_model_year WHERE manufacturer = 'honda' AND model = 'civic' LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 483.0
+    },
+    {
+      "id": "civic-avg-odometer",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT AVG(odometer) AS avg_odometer FROM mileage_points WHERE manufacturer = 'honda' AND model = 'civic' LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 618.5
+    },
+    {
+      "id": "priciest-toyota",
+      "level": "hard",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT mp.model, QUANTILE_CONT(mp.price, 0.5 ORDER BY mp.price) AS median_price FROM mileage_points AS mp WHERE mp.manufacturer = 'toyota' GROUP BY mp.model HAVING SUM(CASE WHEN mp.manufacturer = 'toyota' THEN 1 ELSE 0 END) >= 100 ORDER BY median_price DESC LIMIT 1",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 751.4
+    },
+    {
+      "id": "jeep-models",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT COUNT(DISTINCT model) AS jeep_model_count FROM prices_by_model_year WHERE manufacturer = 'jeep' LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 659.5
+    },
+    {
+      "id": "corvette-peak",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT year, avg_price FROM prices_by_model_year WHERE manufacturer = 'chevrolet' AND model = 'corvette' ORDER BY avg_price DESC LIMIT 1",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 581.3
+    },
+    {
+      "id": "priciest-big-brand",
+      "level": "hard",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT manufacturer AS brand, SUM(avg_price * count) / SUM(count) AS avg_price FROM prices_by_model_year GROUP BY manufacturer HAVING SUM(count) >= 1000 ORDER BY avg_price DESC LIMIT 1",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 603.5
+    },
+    {
+      "id": "camry-2010-vs-2020",
+      "level": "hard",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT (SELECT avg_price FROM prices_by_model_year WHERE manufacturer = 'toyota' AND model = 'camry' AND year = 2020) - (SELECT avg_price FROM prices_by_model_year WHERE manufacturer = 'toyota' AND model = 'camry' AND year = 2010) AS price_difference LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 719.1
+    },
+    {
+      "id": "pricey-f150-mileage",
+      "level": "hard",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT QUANTILE_CONT(odometer, 0.5 ORDER BY odometer) AS median_odometer FROM mileage_points WHERE manufacturer = 'ford' AND model = 'f-150' AND price > 30000 LIMIT 100",
+      "model": "groq:openai/gpt-oss-20b",
+      "latency_ms": 815.7
+    },
+    {
+      "id": "subaru-share",
+      "level": "hard",
+      "outcome": "error",
+      "detail": "query_failed",
+      "sql": "",
+      "model": "",
+      "latency_ms": 526.4
+    }
+  ]
+}

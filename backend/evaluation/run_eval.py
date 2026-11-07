@@ -36,6 +36,8 @@ class Result:
     outcome: str
     detail: str = ""
     sql: str = ""
+    model: str = ""
+    reply: str = ""  # raw model reply, recorded for rejected answers
     latency_ms: float = 0.0
 
 
@@ -70,12 +72,22 @@ def evaluate(
             answer = service.ask(question.text)
         except AskError as error:
             outcome = "rejected" if error.code.startswith("rejected_") else "error"
-            result = Result(question.id, question.level, outcome, detail=error.code)
+            result = Result(
+                question.id,
+                question.level,
+                outcome,
+                detail=error.code,
+                reply=error.reply_text[:500],
+            )
         else:
             actual = [tuple(row) for row in answer.rows]
             correct = results_match(expected, actual, ordered=question.ordered)
             result = Result(
-                question.id, question.level, "correct" if correct else "wrong", sql=answer.sql
+                question.id,
+                question.level,
+                "correct" if correct else "wrong",
+                sql=answer.sql,
+                model=f"{answer.provider}:{answer.model}",
             )
         result.latency_ms = round((time.perf_counter() - started) * 1000, 1)
         results.append(result)

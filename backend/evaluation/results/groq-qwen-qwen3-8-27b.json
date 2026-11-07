@@ -1,0 +1,290 @@
+{
+  "provider": "groq",
+  "run_at": "2026-11-07T22:46:37+00:00",
+  "total": 30,
+  "counts": {
+    "correct": 23,
+    "wrong": 0,
+    "rejected": 0,
+    "error": 7
+  },
+  "accuracy": 0.767,
+  "rejection_rate": 0.0,
+  "accuracy_by_level": {
+    "easy": 0.714,
+    "medium": 0.727,
+    "hard": 1.0
+  },
+  "results": [
+    {
+      "id": "top-brands",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT manufacturer, count FROM top_brands ORDER BY count DESC LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 894.0
+    },
+    {
+      "id": "price-by-year",
+      "level": "easy",
+      "outcome": "error",
+      "detail": "provider_busy",
+      "sql": "",
+      "model": "",
+      "latency_ms": 352.4
+    },
+    {
+      "id": "priciest-states",
+      "level": "easy",
+      "outcome": "error",
+      "detail": "provider_busy",
+      "sql": "",
+      "model": "",
+      "latency_ms": 554.2
+    },
+    {
+      "id": "listings-per-condition",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT condition, count FROM condition_distribution ORDER BY count DESC LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 555.0
+    },
+    {
+      "id": "camry-median-price",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT MEDIAN(price) AS median_price FROM mileage_points WHERE manufacturer = 'toyota' AND model = 'camry' LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 607.9
+    },
+    {
+      "id": "top-ford-models",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT model, SUM(count) AS total_listings FROM prices_by_model_year WHERE manufacturer = 'ford' GROUP BY model ORDER BY total_listings DESC LIMIT 10",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 595.8
+    },
+    {
+      "id": "total-vehicles",
+      "level": "easy",
+      "outcome": "error",
+      "detail": "provider_busy",
+      "sql": "",
+      "model": "",
+      "latency_ms": 332.6
+    },
+    {
+      "id": "avg-market-price",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT avg_market_price FROM market_stats LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 916.1
+    },
+    {
+      "id": "year-range",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT oldest_year, newest_year FROM market_stats LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 484.6
+    },
+    {
+      "id": "brand-count",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT total_brands FROM market_stats LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 596.4
+    },
+    {
+      "id": "busiest-state",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT state FROM geo_distribution ORDER BY count DESC LIMIT 1",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 559.1
+    },
+    {
+      "id": "california-listings",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT count FROM geo_distribution WHERE state = 'ca' LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 510.7
+    },
+    {
+      "id": "texas-avg-price",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT avg_price FROM geo_distribution WHERE state = 'tx' LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 534.1
+    },
+    {
+      "id": "quietest-states",
+      "level": "medium",
+      "outcome": "error",
+      "detail": "provider_busy",
+      "sql": "",
+      "model": "",
+      "latency_ms": 326.2
+    },
+    {
+      "id": "excellent-condition",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT count FROM condition_distribution WHERE condition = 'excellent' LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 520.8
+    },
+    {
+      "id": "unknown-condition-share",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT ROUND(100.0 * SUM(CASE WHEN condition = 'unknown' THEN count ELSE 0 END) / SUM(count), 2) AS pct_unknown FROM condition_distribution LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 1066.6
+    },
+    {
+      "id": "busiest-model-year",
+      "level": "easy",
+      "outcome": "error",
+      "detail": "provider_busy",
+      "sql": "",
+      "model": "",
+      "latency_ms": 362.9
+    },
+    {
+      "id": "price-2015",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT avg_price_year AS avg_price FROM price_volume_by_year WHERE year = 2015 LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 561.9
+    },
+    {
+      "id": "under-10k",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT SUM(count) AS listings_under_10k FROM price_histogram WHERE price_range < 10000 LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 806.1
+    },
+    {
+      "id": "busiest-price-range",
+      "level": "medium",
+      "outcome": "error",
+      "detail": "provider_busy",
+      "sql": "",
+      "model": "",
+      "latency_ms": 326.5
+    },
+    {
+      "id": "f150-recent-prices",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT year, avg_price FROM prices_by_model_year WHERE manufacturer = 'ford' AND model = 'f-150' AND year >= 2015 ORDER BY year LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 753.6
+    },
+    {
+      "id": "civic-listings",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT SUM(count) AS total_listings FROM prices_by_model_year WHERE manufacturer = 'honda' AND model = 'civic' LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 925.2
+    },
+    {
+      "id": "civic-avg-odometer",
+      "level": "medium",
+      "outcome": "error",
+      "detail": "provider_busy",
+      "sql": "",
+      "model": "",
+      "latency_ms": 319.6
+    },
+    {
+      "id": "priciest-toyota",
+      "level": "hard",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT model, MEDIAN(price) AS median_price FROM mileage_points WHERE manufacturer = 'toyota' GROUP BY model HAVING SUM(1) >= 100 ORDER BY median_price DESC LIMIT 1",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 611.1
+    },
+    {
+      "id": "jeep-models",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT COUNT(DISTINCT model) AS distinct_jeep_models FROM prices_by_model_year WHERE manufacturer = 'jeep' LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 642.6
+    },
+    {
+      "id": "corvette-peak",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT MAX(avg_price) AS highest_avg_price FROM prices_by_model_year WHERE manufacturer = 'chevrolet' AND model = 'corvette' LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 499.5
+    },
+    {
+      "id": "priciest-big-brand",
+      "level": "hard",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT manufacturer, SUM(avg_price * count) / SUM(count) AS avg_price FROM prices_by_model_year GROUP BY manufacturer HAVING SUM(count) >= 1000 ORDER BY avg_price DESC LIMIT 1",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 671.7
+    },
+    {
+      "id": "camry-2010-vs-2020",
+      "level": "hard",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT (SELECT avg_price FROM prices_by_model_year WHERE manufacturer = 'toyota' AND model = 'camry' AND year = 2020) - (SELECT avg_price FROM prices_by_model_year WHERE manufacturer = 'toyota' AND model = 'camry' AND year = 2010) AS price_difference LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 604.3
+    },
+    {
+      "id": "pricey-f150-mileage",
+      "level": "hard",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT MEDIAN(odometer) AS median_odometer FROM mileage_points WHERE manufacturer = 'ford' AND model = 'f-150' AND price > 30000 LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 779.9
+    },
+    {
+      "id": "subaru-share",
+      "level": "hard",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT ROUND(100.0 * SUM(count) / (SELECT total_vehicles FROM market_stats), 2) AS percentage FROM prices_by_model_year WHERE manufacturer = 'subaru' LIMIT 100",
+      "model": "groq:qwen/qwen3.8-27b",
+      "latency_ms": 3631.5
+    }
+  ]
+}

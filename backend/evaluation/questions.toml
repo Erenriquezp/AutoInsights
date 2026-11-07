@@ -28,7 +28,7 @@ sql = "SELECT year, avg_price_year FROM price_volume_by_year ORDER BY year"
 id = "priciest-states"
 level = "easy"
 ordered = true
-text = "Which states have the highest average price?"
+text = "Which ten states have the highest average price?"
 sql = "SELECT state, avg_price FROM geo_distribution ORDER BY avg_price DESC LIMIT 10"
 
 [[question]]
@@ -49,7 +49,7 @@ sql = "SELECT median(price) FROM mileage_points WHERE manufacturer = 'toyota' AN
 id = "top-ford-models"
 level = "medium"
 ordered = true
-text = "Which Ford models have the most listings?"
+text = "Which ten Ford models have the most listings?"
 sql = """
 SELECT model, SUM(count) AS listings FROM prices_by_model_year
 WHERE manufacturer = 'ford' GROUP BY model ORDER BY listings DESC LIMIT 10"""

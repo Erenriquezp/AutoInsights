@@ -1,0 +1,320 @@
+{
+  "provider": "gemini",
+  "run_at": "2026-11-07T22:57:26+00:00",
+  "total": 30,
+  "counts": {
+    "correct": 24,
+    "wrong": 3,
+    "rejected": 1,
+    "error": 2
+  },
+  "accuracy": 0.8,
+  "rejection_rate": 0.033,
+  "accuracy_by_level": {
+    "easy": 0.929,
+    "medium": 0.727,
+    "hard": 0.6
+  },
+  "results": [
+    {
+      "id": "top-brands",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT manufacturer, count FROM top_brands ORDER BY count DESC LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 1208.1
+    },
+    {
+      "id": "price-by-year",
+      "level": "easy",
+      "outcome": "wrong",
+      "detail": "",
+      "sql": "SELECT year, avg_price_year, volume_year FROM price_volume_by_year ORDER BY year DESC LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 847.4
+    },
+    {
+      "id": "priciest-states",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT state, avg_price FROM geo_distribution ORDER BY avg_price DESC LIMIT 10",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 1118.5
+    },
+    {
+      "id": "listings-per-condition",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT condition, count FROM condition_distribution ORDER BY count DESC LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 7415.7
+    },
+    {
+      "id": "camry-median-price",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT MEDIAN(price) AS median_price FROM mileage_points WHERE manufacturer = 'toyota' AND model = 'camry' LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 2506.9
+    },
+    {
+      "id": "top-ford-models",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT model, SUM(count) AS listings_count FROM prices_by_model_year WHERE manufacturer = 'ford' GROUP BY model ORDER BY listings_count DESC LIMIT 10",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 2792.8
+    },
+    {
+      "id": "total-vehicles",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT total_vehicles FROM market_stats LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 2829.3
+    },
+    {
+      "id": "avg-market-price",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT avg_market_price FROM market_stats LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 3930.0
+    },
+    {
+      "id": "year-range",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT oldest_year, newest_year FROM market_stats LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 3125.2
+    },
+    {
+      "id": "brand-count",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT total_brands FROM market_stats LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 2092.7
+    },
+    {
+      "id": "busiest-state",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT state FROM geo_distribution ORDER BY count DESC LIMIT 1",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 4658.9
+    },
+    {
+      "id": "california-listings",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT count FROM geo_distribution WHERE state = 'ca' LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 1488.4
+    },
+    {
+      "id": "texas-avg-price",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT avg_price FROM geo_distribution WHERE state = 'tx' LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 10396.8
+    },
+    {
+      "id": "quietest-states",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT state, count FROM geo_distribution ORDER BY count ASC LIMIT 5",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 1185.2
+    },
+    {
+      "id": "excellent-condition",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT count FROM condition_distribution WHERE condition = 'excellent' LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 1509.8
+    },
+    {
+      "id": "unknown-condition-share",
+      "level": "medium",
+      "outcome": "error",
+      "detail": "provider_unavailable",
+      "sql": "",
+      "model": "",
+      "reply": "",
+      "latency_ms": 11072.0
+    },
+    {
+      "id": "busiest-model-year",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT year FROM price_volume_by_year ORDER BY volume_year DESC LIMIT 1",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 1731.5
+    },
+    {
+      "id": "price-2015",
+      "level": "easy",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT avg_price_year FROM price_volume_by_year WHERE year = 2015 LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 1499.1
+    },
+    {
+      "id": "under-10k",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT SUM(count) AS listings_under_10k FROM price_histogram WHERE price_range < 10000 LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 835.8
+    },
+    {
+      "id": "busiest-price-range",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT price_range FROM price_histogram ORDER BY count DESC LIMIT 1",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 971.8
+    },
+    {
+      "id": "f150-recent-prices",
+      "level": "medium",
+      "outcome": "wrong",
+      "detail": "",
+      "sql": "SELECT year, avg_price FROM prices_by_model_year WHERE manufacturer = 'ford' AND model = 'f-150' AND year >= 2015 ORDER BY year DESC LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 1563.7
+    },
+    {
+      "id": "civic-listings",
+      "level": "medium",
+      "outcome": "rejected",
+      "detail": "rejected_invalid_sql",
+      "sql": "",
+      "model": "",
+      "reply": "```sql\nsql\nSELECT SUM(count) AS listing_count\nFROM prices_by_model_year\nWHERE manufacturer = 'honda' AND model = 'civic';\n```",
+      "latency_ms": 873.8
+    },
+    {
+      "id": "civic-avg-odometer",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT AVG(odometer) FROM mileage_points WHERE manufacturer = 'honda' AND model = 'civic' LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 4177.6
+    },
+    {
+      "id": "priciest-toyota",
+      "level": "hard",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT m.model FROM mileage_points AS m JOIN (SELECT model, SUM(count) AS total_count FROM prices_by_model_year WHERE manufacturer = 'toyota' GROUP BY model HAVING SUM(count) >= 100) AS t ON m.model = t.model WHERE m.manufacturer = 'toyota' GROUP BY m.model ORDER BY QUANTILE_CONT(m.price, 0.5) DESC LIMIT 1",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 1189.8
+    },
+    {
+      "id": "jeep-models",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT COUNT(DISTINCT model) AS jeep_models FROM prices_by_model_year WHERE manufacturer = 'jeep' LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 10568.4
+    },
+    {
+      "id": "corvette-peak",
+      "level": "medium",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT MAX(avg_price) AS highest_avg_price FROM prices_by_model_year WHERE manufacturer = 'chevrolet' AND model = 'corvette' LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 1363.0
+    },
+    {
+      "id": "priciest-big-brand",
+      "level": "hard",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT manufacturer FROM (SELECT manufacturer, SUM(count) AS total_listings, SUM(avg_price * count) / SUM(count) AS avg_price FROM prices_by_model_year GROUP BY manufacturer) WHERE total_listings >= 1000 ORDER BY avg_price DESC LIMIT 1",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 1573.8
+    },
+    {
+      "id": "camry-2010-vs-2020",
+      "level": "hard",
+      "outcome": "correct",
+      "detail": "",
+      "sql": "SELECT (SELECT avg_price FROM prices_by_model_year WHERE manufacturer = 'toyota' AND model = 'camry' AND year = 2020) - (SELECT avg_price FROM prices_by_model_year WHERE manufacturer = 'toyota' AND model = 'camry' AND year = 2010) AS price_difference LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 2768.7
+    },
+    {
+      "id": "pricey-f150-mileage",
+      "level": "hard",
+      "outcome": "error",
+      "detail": "provider_unavailable",
+      "sql": "",
+      "model": "",
+      "reply": "",
+      "latency_ms": 20058.7
+    },
+    {
+      "id": "subaru-share",
+      "level": "hard",
+      "outcome": "wrong",
+      "detail": "",
+      "sql": "SELECT (tb.count * 100.0) / ms.total_vehicles AS subaru_percentage FROM top_brands AS tb CROSS JOIN market_stats AS ms WHERE tb.manufacturer = 'subaru' LIMIT 100",
+      "model": "gemini:gemini-3.5-flash-lite",
+      "reply": "",
+      "latency_ms": 3836.4
+    }
+  ]
+}
