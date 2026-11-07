@@ -134,16 +134,15 @@ def test_depreciation_summary_and_history(client):
     # weighted average: (12,000 * 10 + 40,000 * 30) / 40
     assert data["summary"]["avg_price"] == 33_000.0
     assert data["summary"]["total_samples"] == 40
-    # (40,000 - 12,000) / 40,000
-    assert data["summary"]["depreciation_value"] == 70.0
-    assert data["summary"]["depreciation_text"] == "70.0% historical depreciation"
+    assert data["summary"]["min_year_listings"] == 20
+    # 2010 has only 10 listings, so there is no reliable five-year comparison
+    assert data["summary"]["five_year_change"] is None
 
 
-def test_depreciation_with_a_single_year_has_not_enough_data(client):
+def test_depreciation_with_a_single_year_has_no_comparison(client):
     summary = client.get("/api/vehicles/depreciation?brand=ford&model=mustang").json()["summary"]
 
-    assert summary["depreciation_value"] == 0
-    assert summary["depreciation_text"] == "Not enough data"
+    assert summary["five_year_change"] is None
 
 
 def test_depreciation_for_an_unknown_model_is_404(client):
@@ -170,12 +169,45 @@ def test_mileage_for_an_unknown_model_is_empty(client):
     assert client.get("/api/vehicles/mileage?brand=ford&model=model-t").json() == []
 
 
-def test_zero_newest_price_is_reported_as_appreciation():
-    history = [{"avg_price": 5_000.0}, {"avg_price": 0.0}]
+def row(year: int, price: float, count: int = 50) -> dict:
+    return {"year": year, "avg_price": price, "count": count}
 
-    result = services.VehicleService._calculate_depreciation(history)
 
-    assert result == {"text": "Value appreciation (classic)", "value": 0}
+def test_five_year_change_compares_the_newest_reliable_year_with_five_years_earlier():
+    history = [row(2014, 20_000), row(2015, 25_000), row(2019, 38_000), row(2020, 40_000)]
+
+    change = services.VehicleService._five_year_change(history, min_listings=20)
+
+    assert change == {
+        "from_year": 2015,
+        "to_year": 2020,
+        "from_price": 25_000,
+        "to_price": 40_000,
+        "pct": -37.5,
+    }
+
+
+def test_five_year_change_ignores_years_with_few_listings():
+    # 2022 has a single listing: v1 compared against it and reported nonsense
+    history = [row(2016, 30_000), row(2021, 58_000, count=30), row(2022, 10_000, count=1)]
+
+    change = services.VehicleService._five_year_change(history, min_listings=20)
+
+    assert (change["from_year"], change["to_year"]) == (2016, 2021)
+
+
+@pytest.mark.parametrize(
+    "history",
+    [
+        [],
+        [row(2020, 40_000)],
+        [row(2014, 20_000), row(2020, 40_000)],  # 2015 is missing
+        [row(2015, 25_000, count=5), row(2020, 40_000)],  # 2015 is not reliable
+        [row(2015, 25_000), row(2020, 0)],  # no price to compare against
+    ],
+)
+def test_five_year_change_is_none_without_a_reliable_pair(history):
+    assert services.VehicleService._five_year_change(history, min_listings=20) is None
 
 
 def test_mileage_sample_is_capped_deterministic_and_from_the_model(monkeypatch, tmp_path):

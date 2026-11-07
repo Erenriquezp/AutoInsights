@@ -95,39 +95,44 @@ class VehicleService(BaseService):
         total_count = sum(row["count"] for row in history)
         weighted_price = sum(row["avg_price"] * row["count"] for row in history)
         avg_price = round(weighted_price / total_count, 2) if total_count > 0 else 0
-        depreciation = VehicleService._calculate_depreciation(history)
+        min_listings = settings.MIN_YEAR_LISTINGS
 
         return {
             "vehicle": f"{brand} {model}",
             "summary": {
                 "avg_price": avg_price,
                 "total_samples": total_count,
-                "depreciation_text": depreciation["text"],
-                "depreciation_value": depreciation["value"],
+                "min_year_listings": min_listings,
+                "five_year_change": VehicleService._five_year_change(history, min_listings),
             },
             "history": history,
         }
 
     @staticmethod
-    def _calculate_depreciation(history: list[dict[str, Any]]) -> dict[str, Any]:
-        """Percentage drop from the newest model year's price to the oldest one's.
+    def _five_year_change(
+        history: list[dict[str, Any]], min_listings: int
+    ) -> dict[str, Any] | None:
+        """How much less a model year five years older is listed for.
 
-        `history` is sorted by year ascending, so the last row is the newest model year.
+        Only model years with at least `min_listings` listings count: v1 compared the oldest and
+        newest years whatever their size (e.g. against a 2022 with one listing). The newest
+        reliable year is compared with the reliable year exactly five years before it; without
+        such a pair there is no figure, rather than a misleading one.
         """
-        if len(history) < 2:
-            return {"text": "Not enough data", "value": 0}
-
-        price_newest = history[-1]["avg_price"]
-        price_oldest = history[0]["avg_price"]
-
-        if price_newest > 0:
-            drop_pct = ((price_newest - price_oldest) / price_newest) * 100
-            return {
-                "text": f"{drop_pct:.1f}% historical depreciation",
-                "value": round(drop_pct, 2),
-            }
-
-        return {"text": "Value appreciation (classic)", "value": 0}
+        reliable = {row["year"]: row for row in history if row["count"] >= min_listings}
+        if not reliable:
+            return None
+        to_year = max(reliable)
+        newer, older = reliable[to_year], reliable.get(to_year - 5)
+        if older is None or newer["avg_price"] <= 0:
+            return None
+        return {
+            "from_year": older["year"],
+            "to_year": newer["year"],
+            "from_price": older["avg_price"],
+            "to_price": newer["avg_price"],
+            "pct": round((older["avg_price"] / newer["avg_price"] - 1) * 100, 1),
+        }
 
     @staticmethod
     def get_mileage_analysis(brand: str, model: str) -> list[dict[str, Any]]:
