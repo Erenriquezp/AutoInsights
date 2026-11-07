@@ -1,6 +1,6 @@
 # AutoInsights
 
-**Used-car market analytics at scale.** A distributed Apache Spark ETL cleans and aggregates 440K+ used-car listings into MongoDB, a FastAPI service exposes the results, and a React dashboard turns them into price, depreciation, mileage and geographic insights.
+**Used-car market analytics at scale.** A distributed Apache Spark ETL cleans and aggregates 420K+ used-car listings into MongoDB, a FastAPI service exposes the results, and a React dashboard turns them into price, depreciation, mileage and geographic insights.
 
 > Academic team project (Big Data course, Universidad Central del Ecuador, 2026).
 
@@ -9,7 +9,7 @@
 ## Highlights
 
 - **Distributed processing:** Spark 3.5 cluster (1 master + 2 workers) running in Docker Compose.
-- **Data quality first:** explicit schema, multi-line CSV parsing, range validation and model-name normalization. **441,802 raw listings → 354,813 clean records.**
+- **Data quality first:** explicit schema, multi-line CSV parsing, range validation and model-name normalization. **426,880 raw listings → 354,649 clean records.**
 - **Pre-aggregated serving layer:** the ETL writes 8 analytics collections to MongoDB, so the API reads ready-made results instead of scanning raw data.
 - **Typed dashboard:** React 19 + TypeScript with Recharts and Google Charts: KPIs, price trend, depreciation by model, price vs. mileage, condition mix, price histogram, US heat map and top brands.
 

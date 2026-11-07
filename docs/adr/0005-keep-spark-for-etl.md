@@ -5,7 +5,7 @@
 
 ## Context
 
-The ETL processes a 1.4 GB CSV (441,802 rows) on a local Spark cluster (1 master + 2 workers). The
+The ETL processes a 1.4 GB CSV (426,880 rows) on a local Spark cluster (1 master + 2 workers). The
 dataset is static, so the ETL runs rarely. Spark is the core of the original Big Data project and a
 skill worth showing, but any managed Spark service in the cloud would be the only paid part of the system.
 

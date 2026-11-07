@@ -6,7 +6,7 @@ Everything runs locally in Docker Compose.
 
 ```mermaid
 flowchart LR
-    CSV[(vehicles.csv<br/>1.4 GB · 441,802 rows)] --> ETL
+    CSV[(vehicles.csv<br/>1.4 GB · 426,880 rows)] --> ETL
     subgraph Spark["Spark 3.5 cluster (Docker)"]
         ETL[ETL job<br/>extract · validate · normalize · aggregate]
     end
