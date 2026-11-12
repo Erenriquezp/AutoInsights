@@ -38,7 +38,7 @@ export default function ColumnChart({
   const axis = cockpit ? COCKPIT.axis : AXIS;
   const top = formatAxis(Math.max(0, ...data.map((d) => d.value)) * 1.1);
   return (
-    <div style={{ width: '100%', height: `${height / 16}rem` }} aria-hidden="true">
+    <div className="chart-box" style={{ minHeight: `${height / 16}rem` }} aria-hidden="true">
       <ResponsiveContainer>
         <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 0 }} barCategoryGap="18%">
           <CartesianGrid vertical={false} stroke={cockpit ? COCKPIT.grid : GRID} />

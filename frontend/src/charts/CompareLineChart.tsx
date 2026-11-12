@@ -29,7 +29,7 @@ export default function CompareLineChart({ primary, secondary, formatValue, form
   }));
 
   return (
-    <div style={{ width: '100%', height: `${height / 16}rem` }} aria-hidden="true">
+    <div className="chart-box" style={{ minHeight: `${height / 16}rem` }} aria-hidden="true">
       <ResponsiveContainer>
         <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} stroke={GRID} />

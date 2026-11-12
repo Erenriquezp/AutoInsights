@@ -2,16 +2,19 @@
 
 .panel {
   min-width: 0;
+  /* a column, so the body can take whatever height the row gives the panel */
+  display: flex;
+  flex-direction: column;
   padding: 1.375rem 1.5rem 1.5rem;
   background: var(--bg-elevated);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-panel);
 }
+/* title and help left, the button right: it stays put however long the help is */
 .panel-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 1rem;
   margin-bottom: 1.125rem;
 }
@@ -45,16 +48,29 @@
   border-color: var(--text-secondary);
 }
 
+/* a wide panel and a narrow one, side by side when the page (not the window) has room */
 .grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
 }
-.grid > .wide {
-  flex: 2 1 34rem;
+@container page (min-width: 56rem) {
+  .grid {
+    /* the narrow one never drops below the width a three-column table needs */
+    grid-template-columns: minmax(0, 2fr) minmax(25rem, 1fr);
+  }
 }
-.grid > .narrow {
-  flex: 1 1 20rem;
+
+/* what fills a panel: charts and lists grow with it, so a panel stretched to its row's
+   height has no empty band at the bottom */
+.chart-box {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+}
+.chart-box > div {
+  position: absolute;
+  inset: 0;
 }
 @media (max-width: 860px) {
   .grid {
@@ -97,21 +113,24 @@
    Each figure sits under a drawing's dimension line: a rule with end ticks, as on a part
    drawing. This is the one bold element of the dashboard. */
 
+/* Cells wrap and the last row stretches, so three or four figures never leave an empty cell.
+   Each cell draws its right and bottom rule; the band clips the outer ones. */
 .kpi-band dl {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   margin: 0;
+  overflow: hidden;
   background: var(--bg-elevated);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-panel);
 }
 .readout {
   position: relative;
+  flex: 1 1 13rem;
+  margin: 0 -1px -1px 0;
   padding: 1.75rem 1.5rem 1.25rem;
   border-right: 1px solid var(--line-soft);
-}
-.readout:last-child {
-  border-right: 0;
+  border-bottom: 1px solid var(--line-soft);
 }
 .readout::before {
   content: '';
@@ -160,12 +179,9 @@
   color: var(--accent);
 }
 @media (max-width: 860px) {
-  .kpi-band dl {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
   .readout {
+    flex-basis: 9rem;
     padding: 1.5rem 1rem 1rem;
-    border-bottom: 1px solid var(--line-soft);
   }
   .readout::before {
     left: 1rem;
@@ -182,6 +198,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
+  /* in a taller panel the rows spread out instead of leaving a gap underneath */
+  flex: 1 1 auto;
+  justify-content: space-between;
 }
 .bar-list li {
   display: grid;

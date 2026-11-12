@@ -21,7 +21,7 @@ interface ScatterPlotProps {
 export default function ScatterPlot({ series, xName, yName, formatX, formatY, height = 300 }: ScatterPlotProps) {
   const single = series.length === 1;
   return (
-    <div style={{ width: '100%', height: `${height / 16}rem` }} aria-hidden="true">
+    <div className="chart-box" style={{ minHeight: `${height / 16}rem` }} aria-hidden="true">
       <ResponsiveContainer>
         <ScatterChart margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
           <CartesianGrid stroke={GRID} />

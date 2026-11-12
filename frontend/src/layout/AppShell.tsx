@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Icon, Logo, type IconName } from '../components/Icon';
+import { Segmented } from '../components/ui';
 import { useI18n } from '../i18n/context';
 import './AppShell.css';
 
@@ -37,6 +38,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const menuButton = useRef<HTMLButtonElement>(null);
 
   const page = t.pages[pageForPath(location.pathname)];
+  const other = lang === 'en' ? 'es' : 'en';
 
   useEffect(() => {
     try {
@@ -72,7 +74,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             to={p.path}
             end={p.path === '/'}
             className="nav-link"
-            title={collapsed ? t.pages[p.key].nav : undefined}
             onClick={() => setDrawerOpen(false)}
           >
             <Icon name={p.icon} size={21} />
@@ -106,10 +107,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             onClick={() => setCollapsed((c) => !c)}
             aria-expanded={!collapsed}
             aria-label={collapsed ? t.app.expand : t.app.collapse}
-            title={collapsed ? t.app.expand : t.app.collapse}
           >
             <Icon name="collapse" />
-            <span className="nav-label">{t.app.collapse}</span>
+            <span className="nav-label">{collapsed ? t.app.expand : t.app.collapse}</span>
           </button>
         </div>
       </aside>
@@ -131,13 +131,21 @@ export function AppShell({ children }: { children: ReactNode }) {
             <h1>{page.title}</h1>
             <p>{page.subtitle}</p>
           </div>
-          <div className="lang-switch" role="group" aria-label={t.app.language}>
-            {(['en', 'es'] as const).map((code) => (
-              <button key={code} type="button" aria-pressed={lang === code} onClick={() => setLang(code)}>
-                {code.toUpperCase()}
-              </button>
-            ))}
+          <div className="lang-switch">
+            <Segmented
+              label={t.app.language}
+              value={lang}
+              onChange={setLang}
+              options={[
+                { value: 'en', label: 'EN' },
+                { value: 'es', label: 'ES' },
+              ]}
+            />
           </div>
+          {/* phone: one button that names the other language, so the title keeps its line */}
+          <button type="button" className="icon-button lang-toggle" lang={other} aria-label={t.app.switchTo} onClick={() => setLang(other)}>
+            {other.toUpperCase()}
+          </button>
         </header>
         <main id="content" className="content" tabIndex={-1}>
           {children}

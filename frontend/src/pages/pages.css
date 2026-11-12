@@ -14,7 +14,8 @@
 .area-mileage { grid-area: mileage; }
 .area-condition { grid-area: condition; }
 
-@media (min-width: 900px) {
+/* by the page's own width (a container query), so opening the menu can drop a column */
+@container page (min-width: 40rem) {
   .overview-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-areas:
@@ -23,7 +24,7 @@
       'brands condition';
   }
 }
-@media (min-width: 1400px) {
+@container page (min-width: 64rem) {
   .overview-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-template-areas:
@@ -31,7 +32,7 @@
       'price mileage condition';
   }
 }
-@media (min-width: 1900px) {
+@container page (min-width: 100rem) {
   .overview-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-areas:
@@ -54,6 +55,8 @@
 }
 .picker {
   display: flex;
+  /* a row that wraps (a panel is a column by default) */
+  flex-direction: row;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 1rem;
@@ -82,7 +85,13 @@
 .compare-head {
   display: grid;
   gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 34rem), 1fr));
+  grid-template-columns: minmax(0, 1fr);
+}
+/* the two vehicles side by side as soon as each can hold a 2 x 2 block of figures */
+@container page (min-width: 48rem) {
+  .compare-head {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .compare-card {
   display: flex;
@@ -109,15 +118,9 @@
   font-weight: 600;
   line-height: 1.05;
 }
-.compare-card .kpi-band dl {
-  /* four figures in half the width: a 2 x 2 block keeps them apart */
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.compare-card .readout:nth-child(2n) {
-  border-right: 0;
-}
-.compare-card .readout:nth-child(-n + 2) {
-  border-bottom: 1px solid var(--line-soft);
+/* four figures in half the width: a 2 x 2 block keeps them apart */
+.compare-card .readout {
+  flex-basis: 40%;
 }
 
 
@@ -161,6 +164,25 @@
 .geo-table {
   max-height: 34rem;
   overflow-y: auto;
+}
+/* phone: tighter cells, so three columns fit without a sideways scroll */
+@media (max-width: 480px) {
+  .geo-table .data-table th,
+  .geo-table .data-table td {
+    padding-inline: 0.25rem;
+  }
+}
+/* side by side: the map sets the row's height and the list of states scrolls inside it */
+@container page (min-width: 56rem) {
+  .geo-list {
+    height: 0;
+    min-height: 100%;
+  }
+  .geo-list .geo-table {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+  }
 }
 
 /* ---------------------------------------------------------------- ask */
@@ -233,7 +255,9 @@
   margin-top: 0.75rem;
 }
 .ask-guard {
-  margin: 1rem 0 0;
+  /* pinned to the bottom of the panel when the answer beside it is taller */
+  margin: auto 0 0;
+  padding-top: 1rem;
   padding-left: 1.125rem;
   color: var(--text-secondary);
   font-size: 0.8125rem;

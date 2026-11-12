@@ -5,6 +5,7 @@ import { DataTable, ErrorState, KpiBand, Loading, Panel } from '../components/ui
 import { useI18n } from '../i18n/context';
 import { api } from '../lib/api';
 import { useApi } from '../lib/useApi';
+import './pages.css';
 
 export default function GeographyPage() {
   const { t, f } = useI18n();
@@ -56,7 +57,7 @@ export default function GeographyPage() {
         )}
       </Panel>
 
-      <Panel className="narrow" title={t.geography.tableTitle} help={t.geography.tableHelp}>
+      <Panel className="narrow geo-list" title={t.geography.tableTitle} help={t.geography.tableHelp}>
         <div className="geo-table">
           <DataTable
             caption={t.geography.tableTitle}
