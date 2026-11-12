@@ -71,4 +71,70 @@
   /* motion */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --dur-micro: 175ms;
+
+  /* ---------------------------------------------------------------- "Night cockpit" system
+     Smoked glass over blurred street light. Two jobs, two hues: amber is ACTION and SELECTION,
+     cyan is DATA. Components migrate to these tokens page by page; the ones above stay until then. */
+
+  /* ground and ambient light (see ambient.css) */
+  --surface-0: #0a0e13;
+  --glow-amber: 239 159 39;
+  --glow-cyan: 76 194 214;
+  --glow-blue: 84 120 214;
+
+  /* glass. Level 1 (chrome: menu, sticky header, tooltips) blurs what passes behind it.
+     Level 2 (data cards) is a tint with NO backdrop-filter: the ambient layer is already soft,
+     so it looks the same and costs nothing while scrolling. */
+  --glass-chrome: rgb(15 20 27 / 0.66);
+  --glass-chrome-blur: 18px;
+  --glass-card: rgb(22 28 36 / 0.72);
+  --glass-raised: rgb(255 255 255 / 0.05);
+  --glass-tooltip: rgb(12 16 22 / 0.82);
+  /* what a card resolves to over the darkest ground: for sticky table heads, which must hide rows */
+  --surface-card-solid: #171d25;
+
+  /* edges: a hairline all round, a brighter one where light hits the top */
+  --edge: rgb(255 255 255 / 0.09);
+  --edge-top: rgb(255 255 255 / 0.2);
+  /* the only boundary of a form control or toggle: >= 3:1 on a card */
+  --edge-control: #8791a0;
+
+  /* depth */
+  --shadow-card: inset 0 1px 0 var(--edge-top), 0 1px 2px rgb(0 0 0 / 0.3), 0 28px 56px -28px rgb(0 0 0 / 0.7);
+  --shadow-raised: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 8px 20px -12px rgb(0 0 0 / 0.6);
+  --shadow-float: inset 0 1px 0 var(--edge-top), 0 16px 40px -12px rgb(0 0 0 / 0.75);
+
+  /* ink (AA on a card over the brightest part of the ambient layer) */
+  --ink: #f1efe9;
+  --ink-2: #b6bcc5;
+  --ink-3: #a3aab4;
+
+  /* data: one hue. Emphasis is lightness, never a second hue. */
+  --data: #5fd0e3;
+  --data-rest: #3f9db1;
+  --data-track: rgb(95 208 227 / 0.14);
+  --data-grid: rgb(255 255 255 / 0.07);
+
+  /* shape */
+  --radius-card: 1.125rem;
+  --radius-tile: 0.75rem;
+  --radius-ctl: 0.5rem;
+  --radius-pill: 999px;
+
+  /* space: 4 px steps */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* type scale. Nothing smaller than --text-xs. */
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-figure: clamp(1.75rem, 1.3rem + 1.1vw, 2.375rem);
+  --text-figure-lead: clamp(2.5rem, 1.7rem + 2.2vw, 3.75rem);
 }

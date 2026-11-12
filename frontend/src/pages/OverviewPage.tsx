@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BarList, EmptyState, ErrorState, KpiBand, Loading, Panel, type Readout } from '../components/ui';
+import { BarList, Card, EmptyState, ErrorState, KpiStrip, Loading, Panel, type Figure } from '../components/ui';
 import { useI18n } from '../i18n/context';
 import { api } from '../lib/api';
 import { brandName } from '../lib/format';
@@ -10,6 +10,9 @@ const ColumnChart = lazy(() => import('../charts/ColumnChart'));
 
 /** Market-wide model years below this many listings are too thin to plot (2022: 26 listings). */
 const MIN_MARKET_YEAR_LISTINGS = 100;
+
+/** Rows the ETL read from the source file, before cleaning (the API serves only the clean count). */
+const RAW_LISTINGS = 426_880;
 
 export default function OverviewPage() {
   const { t, f, fill } = useI18n();
@@ -24,10 +27,18 @@ export default function OverviewPage() {
     return <EmptyState title={t.states.empty}>{t.states.noGold}</EmptyState>;
   }
 
-  const readouts: Readout[] | null =
+  const figures: Figure[] | null =
     stats.status === 'ready' && trend.status === 'ready'
       ? [
-          { label: t.overview.listings, value: f.number(stats.data.total_vehicles), note: t.overview.listingsNote, evidence: true },
+          {
+            label: t.overview.listings,
+            value: f.number(stats.data.total_vehicles),
+            note: fill(t.overview.listingsNote, {
+              pct: f.percent((stats.data.total_vehicles / RAW_LISTINGS) * 100, 0),
+              raw: f.number(RAW_LISTINGS),
+            }),
+            meter: stats.data.total_vehicles / RAW_LISTINGS,
+          },
           { label: t.overview.avgPrice, value: f.money(stats.data.avg_market_price), note: t.overview.avgPriceNote },
           { label: t.overview.brands, value: f.number(stats.data.total_brands), note: fill(t.overview.brandsNote, { models: f.number(stats.data.total_models) }) },
           {
@@ -52,16 +63,16 @@ export default function OverviewPage() {
 
   return (
     <>
-      {readouts ? (
-        <KpiBand label={t.overview.kpis} items={readouts} />
+      {figures ? (
+        <KpiStrip label={t.overview.kpis} items={figures} />
       ) : stats.status === 'error' ? (
-        <ErrorState error={stats.error} onRetry={stats.retry} height={120} />
+        <ErrorState error={stats.error} onRetry={stats.retry} height={120} refined />
       ) : (
         <Loading height={128} />
       )}
 
       <div className="overview-grid">
-        <Panel
+        <Card
           className="area-trend"
           title={t.overview.trendTitle}
           help={`${fill(t.overview.trendHelp, { min: MIN_MARKET_YEAR_LISTINGS })} ${t.overview.trendHighlight}`}
@@ -79,7 +90,15 @@ export default function OverviewPage() {
           {trend.status === 'ready' ? (
             <Suspense fallback={<Loading height={260} />}>
               <ColumnChart
-                data={years.map((y) => ({ key: y.year, label: String(y.year), value: y.avg_price_year, highlight: lastYears.includes(y.year) }))}
+                tone="cockpit"
+                data={years.map((y) => ({
+                  key: y.year,
+                  label: String(y.year),
+                  value: y.avg_price_year,
+                  highlight: lastYears.includes(y.year),
+                  title: `${t.overview.year} ${y.year}`,
+                  detail: [{ name: t.overview.volume, value: f.number(y.volume_year) }],
+                }))}
                 formatValue={f.money}
                 formatAxis={f.compactMoney}
                 valueName={t.overview.price}
@@ -87,11 +106,11 @@ export default function OverviewPage() {
               />
             </Suspense>
           ) : trend.status === 'error' ? (
-            <ErrorState error={trend.error} onRetry={trend.retry} height={260} />
+            <ErrorState error={trend.error} onRetry={trend.retry} height={260} refined />
           ) : (
             <Loading height={260} />
           )}
-        </Panel>
+        </Card>
 
         <Panel
           className="area-condition"

@@ -44,6 +44,13 @@ const PATHS = {
       <path d="M20 6l-6 6 6 6" />
     </>
   ),
+  chart: <path d="M4 20V10M10 20V4M16 20v-7M21 20H3" />,
+  table: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10" />
+    </>
+  ),
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   close: <path d="M6 6l12 12M18 6L6 18" />,
   copy: (

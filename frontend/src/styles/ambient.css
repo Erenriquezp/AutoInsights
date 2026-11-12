@@ -1,0 +1,42 @@
+/* The ambient layer: what the glass is in front of.
+   Three soft pools of light on a fixed layer, like street lamps through a windscreen at night.
+   It never scrolls and never animates, so the browser paints it once. */
+
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+body::before {
+  background:
+    radial-gradient(58rem 36rem at 92% -6%, rgb(var(--glow-amber) / 0.2), transparent 64%),
+    radial-gradient(50rem 42rem at -8% 72%, rgb(var(--glow-cyan) / 0.17), transparent 62%),
+    radial-gradient(48rem 34rem at 62% 114%, rgb(var(--glow-blue) / 0.2), transparent 64%);
+}
+
+/* fine grain: hides the banding that wide dark gradients show on 8-bit screens */
+body::after {
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (max-width: 860px) {
+  /* smaller pools on a phone, or the whole screen turns amber */
+  body::before {
+    background:
+      radial-gradient(26rem 20rem at 100% -4%, rgb(var(--glow-amber) / 0.18), transparent 66%),
+      radial-gradient(24rem 26rem at -10% 60%, rgb(var(--glow-cyan) / 0.15), transparent 64%),
+      radial-gradient(26rem 22rem at 70% 108%, rgb(var(--glow-blue) / 0.18), transparent 66%);
+  }
+}
+
+@media (forced-colors: active) {
+  body::before,
+  body::after {
+    display: none;
+  }
+}

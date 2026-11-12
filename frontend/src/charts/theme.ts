@@ -26,3 +26,26 @@ export const TOOLTIP = {
   labelStyle: { color: '#9aa0a8', marginBottom: 2 },
   itemStyle: { color: '#eceae4', fontFamily: 'JetBrains Mono, ui-monospace, monospace' },
 } as const;
+
+/* ---------------------------------------------------------------- "Night cockpit" theme
+   Colors come from tokens.css (SVG attributes accept var()), so the palette lives in one place.
+   Charts opt in with tone="cockpit" until every page has moved. */
+
+export const COCKPIT = {
+  grid: 'var(--data-grid)',
+  bar: 'var(--data-rest)',
+  barStrong: 'var(--data)',
+  cursor: 'rgb(255 255 255 / 0.06)',
+  axis: {
+    stroke: 'var(--edge-control)',
+    tick: { fill: 'var(--ink-2)', fontSize: 12, fontFamily: 'General Sans, ui-sans-serif, system-ui, sans-serif' },
+    tickLine: false,
+    axisLine: false,
+  },
+} as const;
+
+/** Width of a y-axis in the text face (narrower glyphs than the mono face above). */
+export function axisWidthSans(labels: string[]): number {
+  const longest = Math.max(0, ...labels.map((l) => l.length));
+  return Math.max(40, Math.round(longest * 6.6 + 14));
+}

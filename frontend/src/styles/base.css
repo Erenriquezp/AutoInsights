@@ -18,12 +18,8 @@ body {
   font-size: 0.9375rem;
   line-height: 1.55;
   color: var(--text-primary);
-  background-color: var(--bg-base);
-  /* the drafting grid of the portfolio */
-  background-image:
-    linear-gradient(var(--line-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line-grid) 1px, transparent 1px);
-  background-size: 32px 32px;
+  /* ground color and light: styles/ambient.css */
+  background-color: var(--surface-0);
   -webkit-font-smoothing: antialiased;
 }
 
