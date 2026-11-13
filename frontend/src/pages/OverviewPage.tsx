@@ -1,18 +1,28 @@
 import { lazy, Suspense } from 'react';
+import type { SharePart } from '../charts/StackedShare';
+import StackedShare from '../charts/StackedShare';
 import { BarList, Card, EmptyState, ErrorState, KpiStrip, Loading, Panel, type Figure } from '../components/ui';
 import { useI18n } from '../i18n/context';
 import { api } from '../lib/api';
 import { brandName } from '../lib/format';
+import { histogramMedian } from '../lib/stats';
 import { useApi } from '../lib/useApi';
 import './pages.css';
 
-const ColumnChart = lazy(() => import('../charts/ColumnChart'));
+const TrendChart = lazy(() => import('../charts/TrendChart'));
+const Histogram = lazy(() => import('../charts/Histogram'));
 
 /** Market-wide model years below this many listings are too thin to plot (2022: 26 listings). */
 const MIN_MARKET_YEAR_LISTINGS = 100;
 
 /** Rows the ETL read from the source file, before cleaning (the API serves only the clean count). */
 const RAW_LISTINGS = 426_880;
+
+/** Width of a price band in the histogram the API returns. */
+const PRICE_BAND = 2000;
+
+/** Conditions from best to worst: the order of the scale. Anything else is absence of data. */
+const CONDITION_ORDER = ['new', 'like new', 'excellent', 'good', 'fair', 'salvage'];
 
 export default function OverviewPage() {
   const { t, f, fill } = useI18n();
@@ -52,14 +62,32 @@ export default function OverviewPage() {
       : null;
 
   const years = trend.status === 'ready' ? trend.data.filter((y) => y.volume_year >= MIN_MARKET_YEAR_LISTINGS) : [];
-  const lastYears = years.slice(-3).map((y) => y.year);
+  const trendHelp = fill(t.overview.trendHelp, { min: MIN_MARKET_YEAR_LISTINGS });
+
+  const priceMedian =
+    histogram.status === 'ready' ? histogramMedian(histogram.data.map((b) => ({ start: b.price_range, count: b.count })), PRICE_BAND) : null;
+
+  // conditions in the order of the scale; whatever is not on it (the seller said nothing) goes last
   const totalConditions = conditions.status === 'ready' ? conditions.data.reduce((sum, c) => sum + c.count, 0) : 0;
-  const medianBand =
-    mileage.status === 'ready' && mileage.data.median_odometer !== null
-      ? Math.floor(mileage.data.median_odometer / mileage.data.bucket_size) * mileage.data.bucket_size
-      : undefined;
-  const peakBand =
-    histogram.status === 'ready' ? [...histogram.data].sort((a, b) => b.count - a.count)[0]?.price_range : undefined;
+  const share = (count: number) => f.percent((count / totalConditions) * 100, count / totalConditions < 0.01 ? 1 : 0);
+  const parts: SharePart[] =
+    conditions.status === 'ready'
+      ? [...conditions.data]
+          .sort((a, b) => {
+            const rank = (c: string) => (CONDITION_ORDER.includes(c) ? CONDITION_ORDER.indexOf(c) : CONDITION_ORDER.length);
+            return rank(a.condition) - rank(b.condition);
+          })
+          .map((c) => ({
+            key: c.condition,
+            name: t.conditions[c.condition] ?? c.condition,
+            value: c.count,
+            share: share(c.count),
+            amount: f.number(c.count),
+            tone: CONDITION_ORDER.includes(c.condition) ? ((CONDITION_ORDER.indexOf(c.condition) + 1) as SharePart['tone']) : 'missing',
+          }))
+      : [];
+  const missing = parts.filter((p) => p.tone === 'missing').reduce((sum, p) => sum + p.value, 0);
+  const conditionHelp = fill(t.overview.conditionHelp, { missing: totalConditions ? f.percent((missing / totalConditions) * 100, 0) : '—' });
 
   return (
     <>
@@ -75,7 +103,7 @@ export default function OverviewPage() {
         <Card
           className="area-trend"
           title={t.overview.trendTitle}
-          help={`${fill(t.overview.trendHelp, { min: MIN_MARKET_YEAR_LISTINGS })} ${t.overview.trendHighlight}`}
+          help={trendHelp}
           table={
             trend.status === 'ready'
               ? {
@@ -88,66 +116,56 @@ export default function OverviewPage() {
           }
         >
           {trend.status === 'ready' ? (
-            <Suspense fallback={<Loading height={260} />}>
-              <ColumnChart
-                tone="cockpit"
-                data={years.map((y) => ({
+            <Suspense fallback={<Loading height={280} />}>
+              <TrendChart
+                label={`${t.overview.trendTitle}. ${trendHelp}`}
+                data={years.map((y, i) => ({
                   key: y.year,
                   label: String(y.year),
                   value: y.avg_price_year,
-                  highlight: lastYears.includes(y.year),
+                  volume: y.volume_year,
                   title: `${t.overview.year} ${y.year}`,
                   detail: [{ name: t.overview.volume, value: f.number(y.volume_year) }],
+                  // the newest model year carries its figure: where the curve ends
+                  mark: i === years.length - 1 ? f.money(y.avg_price_year) : undefined,
                 }))}
                 formatValue={f.money}
                 formatAxis={f.compactMoney}
                 valueName={t.overview.price}
-                labelEvery={5}
+                height={280}
               />
             </Suspense>
           ) : trend.status === 'error' ? (
-            <ErrorState error={trend.error} onRetry={trend.retry} height={260} refined />
+            <ErrorState error={trend.error} onRetry={trend.retry} height={280} refined />
           ) : (
-            <Loading height={260} />
+            <Loading height={280} />
           )}
         </Card>
 
         <Panel
           className="area-condition"
           title={t.overview.conditionTitle}
-          help={t.overview.conditionHelp}
+          help={conditionHelp}
           table={
             conditions.status === 'ready'
               ? {
                   caption: t.overview.conditionTitle,
                   columns: [t.overview.condition, t.overview.volume, t.overview.share],
                   numeric: [1, 2],
-                  rows: conditions.data.map((c) => [
-                    t.conditions[c.condition] ?? c.condition,
-                    f.number(c.count),
-                    f.percent((c.count / totalConditions) * 100),
-                  ]),
+                  rows: parts.map((p) => [p.name, p.amount, f.percent((p.value / totalConditions) * 100)]),
                 }
               : undefined
           }
         >
           {conditions.status === 'ready' ? (
-            <BarList
-              label={t.overview.conditionTitle}
-              items={conditions.data.map((c) => ({
-                label: t.conditions[c.condition] ?? c.condition,
-                value: c.count,
-                // shares under 1 % keep a decimal so they never read as "0 %"
-                display: f.percent((c.count / totalConditions) * 100, c.count / totalConditions < 0.01 ? 1 : 0),
-                muted: c.condition === 'unknown',
-              }))}
-            />
+            <StackedShare label={t.overview.conditionTitle} parts={parts} />
           ) : conditions.status === 'error' ? (
             <ErrorState error={conditions.error} onRetry={conditions.retry} />
           ) : (
             <Loading />
           )}
         </Panel>
+
         <Panel
           className="area-price"
           title={t.overview.histTitle}
@@ -158,25 +176,25 @@ export default function OverviewPage() {
                   caption: t.overview.histTitle,
                   columns: [t.overview.band, t.overview.volume],
                   numeric: [1],
-                  rows: histogram.data.map((b) => [`${f.money(b.price_range)}–${f.money(b.price_range + 2000)}`, f.number(b.count)]),
+                  rows: histogram.data.map((b) => [`${f.money(b.price_range)}–${f.money(b.price_range + PRICE_BAND)}`, f.number(b.count)]),
                 }
               : undefined
           }
         >
           {histogram.status === 'ready' ? (
             <Suspense fallback={<Loading height={240} />}>
-              <ColumnChart
-                data={histogram.data.map((b) => ({
-                  key: b.price_range,
-                  label: f.compactMoney(b.price_range),
-                  value: b.count,
-                  highlight: b.price_range === peakBand,
+              <Histogram
+                label={`${t.overview.histTitle}. ${t.overview.histHelp}`}
+                bins={histogram.data.map((b) => ({
+                  start: b.price_range,
+                  count: b.count,
+                  title: fill(t.overview.rangeTo, { from: f.money(b.price_range), to: f.money(b.price_range + PRICE_BAND) }),
                 }))}
-                formatValue={f.number}
-                formatAxis={f.number}
-                valueName={t.overview.volume}
-                height={240}
-                labelEvery={5}
+                countName={t.overview.volume}
+                formatCount={f.number}
+                formatTick={f.compactMoney}
+                tickEvery={20_000}
+                marker={priceMedian !== null ? { value: priceMedian, text: fill(t.overview.medianMark, { value: f.money(Math.round(priceMedian / 100) * 100) }) } : undefined}
               />
             </Suspense>
           ) : histogram.status === 'error' ? (
@@ -189,7 +207,7 @@ export default function OverviewPage() {
         <Panel
           className="area-mileage"
           title={t.overview.mileageTitle}
-          help={fill(t.overview.mileageHelp, { median: mileage.status === 'ready' && mileage.data.median_odometer !== null ? f.number(mileage.data.median_odometer) : '—' })}
+          help={t.overview.mileageHelp}
           table={
             mileage.status === 'ready'
               ? {
@@ -206,18 +224,22 @@ export default function OverviewPage() {
         >
           {mileage.status === 'ready' ? (
             <Suspense fallback={<Loading height={240} />}>
-              <ColumnChart
-                data={mileage.data.buckets.map((b) => ({
-                  key: b.odometer_range,
-                  label: `${f.number(b.odometer_range / 1000)}k`,
-                  value: b.count,
-                  highlight: b.odometer_range === medianBand,
+              <Histogram
+                label={`${t.overview.mileageTitle}. ${t.overview.mileageHelp}`}
+                bins={mileage.data.buckets.map((b) => ({
+                  start: b.odometer_range,
+                  count: b.count,
+                  title: fill(t.overview.milesRange, { from: f.number(b.odometer_range), to: f.number(b.odometer_range + mileage.data.bucket_size) }),
                 }))}
-                formatValue={f.number}
-                formatAxis={f.number}
-                valueName={t.overview.volume}
-                height={240}
-                labelEvery={5}
+                countName={t.overview.volume}
+                formatCount={f.number}
+                formatTick={(v) => `${f.number(v / 1000)}k`}
+                tickEvery={50_000}
+                marker={
+                  mileage.data.median_odometer !== null
+                    ? { value: mileage.data.median_odometer, text: fill(t.overview.medianMark, { value: f.number(mileage.data.median_odometer) }) }
+                    : undefined
+                }
               />
             </Suspense>
           ) : mileage.status === 'error' ? (

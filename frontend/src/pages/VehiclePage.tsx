@@ -4,20 +4,25 @@ import { EmptyState, ErrorState, KpiBand, Loading, Panel, type Readout } from '.
 import { useI18n } from '../i18n/context';
 import { api, ApiError } from '../lib/api';
 import { brandName, modelName, vehicleName } from '../lib/format';
+import { median, retention } from '../lib/stats';
 import type { MileagePoint, VehicleAnalysis } from '../lib/types';
 import { useApi, type Resource } from '../lib/useApi';
 import './pages.css';
 
-const ColumnChart = lazy(() => import('../charts/ColumnChart'));
-const CompareLineChart = lazy(() => import('../charts/CompareLineChart'));
+const TrendChart = lazy(() => import('../charts/TrendChart'));
+const LinesChart = lazy(() => import('../charts/LinesChart'));
 const ScatterPlot = lazy(() => import('../charts/ScatterPlot'));
 
-const median = (values: number[]): number | null => {
-  if (values.length === 0) return null;
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-};
+/** Width of the odometer bands whose median price is drawn over the dots. */
+const MILEAGE_BAND = 20_000;
+
+/** The value-kept curve of a vehicle: one point per model year, by years of age. */
+function retentionOf(analysis: VehicleAnalysis) {
+  return retention(
+    analysis.history.map((h) => ({ year: h.year, price: h.avg_price, count: h.count })),
+    analysis.summary.min_year_listings,
+  );
+}
 
 export default function VehiclePage() {
   const { t } = useI18n();
@@ -139,6 +144,17 @@ function SingleVehicle({ brand, model, analysis, mileage }: { brand: string; mod
   const reliable = history.filter((h) => h.count >= min);
   const thin = history.filter((h) => h.count < min).map((h) => h.year);
   const compared = change ? [change.from_year, change.to_year] : [];
+  const priceHelp = fill(t.vehicle.priceHelp, { min });
+  const kept = retentionOf(analysis);
+  const newest = kept[0]?.year ?? '';
+  const retentionHelp = fill(t.vehicle.retentionHelp, { year: newest });
+  const ageTitle = (age: number) => {
+    const year = kept.find((k) => k.age === age)?.year ?? '';
+    return age === 0 ? fill(t.vehicle.ageNewest, { year }) : fill(age === 1 ? t.vehicle.ageOlderOne : t.vehicle.ageOlder, { years: age, year });
+  };
+  // the same pair of model years as the "five years older" figure, when it starts at the newest year
+  const markAge = change && change.to_year === newest ? change.to_year - change.from_year : null;
+  const markPoint = kept.find((k) => k.age === markAge);
 
   return (
     <>
@@ -164,7 +180,7 @@ function SingleVehicle({ brand, model, analysis, mileage }: { brand: string; mod
         <Panel
           className="wide"
           title={t.vehicle.priceTitle}
-          help={fill(t.vehicle.priceHelp, { min })}
+          help={priceHelp}
           footnote={thin.length > 0 ? fill(t.vehicle.lowSample, { min, years: thin.join(', ') }) : undefined}
           table={{
             caption: t.vehicle.priceTitle,
@@ -173,22 +189,65 @@ function SingleVehicle({ brand, model, analysis, mileage }: { brand: string; mod
             rows: history.map((h) => [h.year, f.money(h.avg_price), f.number(h.count)]),
           }}
         >
-          <Suspense fallback={<Loading height={280} />}>
-            <ColumnChart
-              data={reliable.map((h) => ({ key: h.year, label: String(h.year), value: h.avg_price, highlight: compared.includes(h.year) }))}
+          <Suspense fallback={<Loading height={300} />}>
+            <TrendChart
+              label={`${t.vehicle.priceTitle}. ${priceHelp}`}
+              data={reliable.map((h) => ({
+                key: h.year,
+                label: String(h.year),
+                value: h.avg_price,
+                volume: h.count,
+                title: `${t.overview.year} ${h.year}`,
+                detail: [{ name: t.overview.volume, value: f.number(h.count) }],
+                mark: compared.includes(h.year) ? f.money(h.avg_price) : undefined,
+              }))}
               formatValue={f.money}
               formatAxis={f.compactMoney}
               valueName={t.overview.price}
-              height={280}
-              labelEvery={reliable.length > 16 ? 3 : 1}
+              height={300}
             />
           </Suspense>
         </Panel>
 
+        <Panel
+          className="narrow"
+          title={t.vehicle.retentionTitle}
+          help={retentionHelp}
+          table={{
+            caption: t.vehicle.retentionTitle,
+            columns: [t.overview.year, t.overview.price, t.vehicle.kept],
+            numeric: [1, 2],
+            rows: kept.map((k) => [k.year, f.money(k.price), f.percent(k.pct, 0)]),
+          }}
+        >
+          {kept.length > 1 ? (
+            <Suspense fallback={<Loading height={300} />}>
+              <LinesChart
+                label={`${t.vehicle.retentionTitle}. ${retentionHelp}`}
+                series={[
+                  {
+                    name: t.vehicle.kept,
+                    points: kept.map((k) => ({ x: k.age, y: k.pct })),
+                    mark: markPoint ? { x: markPoint.age, text: fill(t.vehicle.retentionMark, { pct: f.percent(markPoint.pct, 0), years: markPoint.age }) } : undefined,
+                  },
+                ]}
+                titleFor={ageTitle}
+                formatX={String}
+                formatValue={(v) => f.percent(v, 0)}
+                formatAxis={(v) => f.percent(v, 0)}
+                baseline={100}
+                height={300}
+              />
+            </Suspense>
+          ) : (
+            <p className="panel-help">{t.vehicle.fiveYearsNone}</p>
+          )}
+        </Panel>
+
         <MileagePanel
           title={t.vehicle.mileageTitle}
-          help={t.vehicle.mileageHelp}
-          series={[{ name: vehicleName(brand, model), resource: mileage, primary: true }]}
+          help={fill(t.vehicle.mileageHelp, { bin: f.number(MILEAGE_BAND) })}
+          series={[{ name: vehicleName(brand, model), resource: mileage }]}
         />
       </div>
     </>
@@ -219,8 +278,13 @@ function Comparison({ a, b }: { a: Side & { analysis: VehicleAnalysis }; b: Side
   }
 
   const analysisB = b.analysis.data;
-  const reliableValues = (analysis: VehicleAnalysis) =>
-    new Map(analysis.history.filter((h) => h.count >= analysis.summary.min_year_listings).map((h) => [h.year, h.avg_price]));
+  const pricePoints = (analysis: VehicleAnalysis) =>
+    analysis.history.filter((h) => h.count >= analysis.summary.min_year_listings).map((h) => ({ x: h.year, y: h.avg_price }));
+  const keptA = retentionOf(a.analysis);
+  const keptB = retentionOf(analysisB);
+  const priceHelp = fill(t.compare.priceHelp, { min: a.analysis.summary.min_year_listings });
+  const ageTitle = (age: number) => (age === 0 ? t.compare.ageNewest : fill(age === 1 ? t.compare.ageOlderOne : t.compare.ageOlder, { years: age }));
+  const ages = [...new Set([...keptA, ...keptB].map((k) => k.age))].sort((x, y) => x - y);
   const pointsOf = (resource: Resource<MileagePoint[]>) => (resource.status === 'ready' ? resource.data : null);
   const sides = [
     { key: 'a', side: a, analysis: a.analysis, primary: true },
@@ -248,7 +312,7 @@ function Comparison({ a, b }: { a: Side & { analysis: VehicleAnalysis }; b: Side
         <Panel
           className="wide"
           title={t.compare.priceTitle}
-          help={fill(t.compare.priceHelp, { min: a.analysis.summary.min_year_listings })}
+          help={priceHelp}
           table={{
             caption: t.compare.priceTitle,
             columns: [t.overview.year, nameA, nameB],
@@ -263,21 +327,59 @@ function Comparison({ a, b }: { a: Side & { analysis: VehicleAnalysis }; b: Side
           }}
         >
           <Suspense fallback={<Loading height={300} />}>
-            <CompareLineChart
-              primary={{ name: nameA, values: reliableValues(a.analysis) }}
-              secondary={{ name: nameB, values: reliableValues(analysisB) }}
+            <LinesChart
+              label={`${t.compare.priceTitle}. ${priceHelp}`}
+              series={[
+                { name: nameA, points: pricePoints(a.analysis) },
+                { name: nameB, points: pricePoints(analysisB) },
+              ]}
+              titleFor={(year) => `${t.overview.year} ${year}`}
+              formatX={String}
               formatValue={f.money}
               formatAxis={f.compactMoney}
+              height={300}
+            />
+          </Suspense>
+        </Panel>
+
+        <Panel
+          className="narrow"
+          title={t.vehicle.retentionTitle}
+          help={t.compare.retentionHelp}
+          table={{
+            caption: t.vehicle.retentionTitle,
+            columns: [t.compare.age, nameA, nameB],
+            numeric: [0, 1, 2],
+            rows: ages.map((age) => {
+              const ka = keptA.find((k) => k.age === age);
+              const kb = keptB.find((k) => k.age === age);
+              return [age, ka ? f.percent(ka.pct, 0) : '—', kb ? f.percent(kb.pct, 0) : '—'];
+            }),
+          }}
+        >
+          <Suspense fallback={<Loading height={300} />}>
+            <LinesChart
+              label={`${t.vehicle.retentionTitle}. ${t.compare.retentionHelp}`}
+              series={[
+                { name: nameA, points: keptA.map((k) => ({ x: k.age, y: k.pct })) },
+                { name: nameB, points: keptB.map((k) => ({ x: k.age, y: k.pct })) },
+              ]}
+              titleFor={ageTitle}
+              formatX={String}
+              formatValue={(v) => f.percent(v, 0)}
+              formatAxis={(v) => f.percent(v, 0)}
+              baseline={100}
+              height={300}
             />
           </Suspense>
         </Panel>
 
         <MileagePanel
           title={t.compare.mileageTitle}
-          help={t.compare.mileageHelp}
+          help={fill(t.compare.mileageHelp, { bin: f.number(MILEAGE_BAND) })}
           series={[
-            { name: nameA, resource: a.mileage, primary: true },
-            { name: nameB, resource: b.mileage, primary: false },
+            { name: nameA, resource: a.mileage },
+            { name: nameB, resource: b.mileage },
           ]}
         />
       </div>
@@ -290,20 +392,19 @@ function Comparison({ a, b }: { a: Side & { analysis: VehicleAnalysis }; b: Side
 interface MileageSeries {
   name: string;
   resource: Resource<MileagePoint[]>;
-  primary: boolean;
 }
 
 function MileagePanel({ title, help, series }: { title: string; help: string; series: MileageSeries[] }) {
-  const { t, f } = useI18n();
+  const { t, f, fill } = useI18n();
   const failed = series.find((s) => s.resource.status === 'error');
   const ready = series.every((s) => s.resource.status === 'ready');
-  const data = series.map((s) => ({ name: s.name, primary: s.primary, points: s.resource.status === 'ready' ? s.resource.data : [] }));
+  const data = series.map((s) => ({ name: s.name, points: s.resource.status === 'ready' ? s.resource.data : [] }));
   const empty = ready && data.every((d) => d.points.length === 0);
   const single = series.length === 1;
 
   return (
     <Panel
-      className="narrow"
+      className="span-all"
       title={title}
       help={help}
       table={
@@ -320,20 +421,25 @@ function MileagePanel({ title, help, series }: { title: string; help: string; se
       }
     >
       {failed ? (
-        <ErrorState error={failed.resource.error} onRetry={failed.resource.retry} height={280} />
+        <ErrorState error={failed.resource.error} onRetry={failed.resource.retry} height={300} />
       ) : !ready ? (
-        <Loading height={280} />
+        <Loading height={300} />
       ) : empty ? (
         <p className="panel-help">{t.vehicle.noMileage}</p>
       ) : (
-        <Suspense fallback={<Loading height={280} />}>
+        <Suspense fallback={<Loading height={300} />}>
           <ScatterPlot
-            series={data}
-            xName={t.vehicle.odometer}
-            yName={t.vehicle.price}
+            label={`${title}. ${help}`}
+            series={data.map((d) => ({ name: d.name, points: d.points.map((p) => ({ x: p.odometer, y: p.price })) }))}
+            binSize={MILEAGE_BAND}
+            medianName={t.vehicle.medianPrice}
+            countName={t.overview.volume}
+            rangeTitle={(from, to) => fill(t.overview.milesRange, { from: f.number(from), to: f.number(to) })}
             formatX={(v) => `${f.number(Math.round(v / 1000))}k`}
-            formatY={f.compactMoney}
-            height={280}
+            formatY={f.money}
+            formatAxisY={f.compactMoney}
+            formatCount={f.number}
+            height={300}
           />
         </Suspense>
       )}

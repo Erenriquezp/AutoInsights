@@ -114,6 +114,28 @@
   --data-rest: #3f9db1;
   --data-track: rgb(95 208 227 / 0.14);
   --data-grid: rgb(255 255 255 / 0.07);
+  /* two things compared: a validated pair (color-blind safe, >= 3:1 on a card). The second is
+     also dashed wherever it is a line, so the pair never depends on hue alone. */
+  --series-a: #33a0b5;
+  --series-b: #977aea;
+  /* magnitude, five classes: on a dark ground more is brighter. Labels flip ink at step 3. */
+  --seq-1: #255a67;
+  --seq-2: #2d7180;
+  --seq-3: #3fa3b5;
+  --seq-4: #62cfe1;
+  --seq-5: #b9f1f8;
+  /* an ordered scale of six, best first */
+  --ord-1: #d6f7fb;
+  --ord-2: #9fe6f1;
+  --ord-3: #62cfe1;
+  --ord-4: #44aec1;
+  --ord-5: #378d9e;
+  --ord-6: #2c6c7a;
+  /* ink on those fills */
+  --on-data-dark: #0a0e13;
+  --on-data-light: #f1efe9;
+  /* no data: neutral and hatched, never a step of the data hue */
+  --data-missing: rgb(255 255 255 / 0.2);
 
   /* shape */
   --radius-card: 1.125rem;

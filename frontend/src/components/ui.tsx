@@ -257,6 +257,9 @@ export function KpiStrip({ label, items }: { label: string; items: Figure[] }) {
 export interface TooltipRow {
   name: string;
   value: string;
+  /** the series' color, drawn as a short stroke before the name (two or more series) */
+  swatch?: string;
+  dashed?: boolean;
 }
 
 /** The floating readout of a chart: what the mark is, then its numbers. */
@@ -267,7 +270,10 @@ export function ChartTooltip({ title, rows }: { title: string; rows: TooltipRow[
       <dl>
         {rows.map((row) => (
           <div key={row.name}>
-            <dt>{row.name}</dt>
+            <dt>
+              {row.swatch && <span className={row.dashed ? 'chart-key is-dashed' : 'chart-key'} style={{ color: row.swatch }} aria-hidden="true" />}
+              {row.name}
+            </dt>
             <dd>{row.value}</dd>
           </div>
         ))}
@@ -282,8 +288,7 @@ export function Loading({ height = 200 }: { height?: number }) {
   const { t } = useI18n();
   return (
     <div className="state state-loading" style={{ minHeight: `${height / 16}rem` }} role="status">
-      <span className="spinner" aria-hidden="true" />
-      <span>{t.states.loading}</span>
+      <span className="visually-hidden">{t.states.loading}</span>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { GRID_COLUMNS, GRID_ROWS, TILES } from './usStates';
-import { quantileClasses } from './scale';
 
 describe('tile map layout', () => {
   it('has the 50 states and DC exactly once', () => {
@@ -18,16 +17,5 @@ describe('tile map layout', () => {
       expect(t.row).toBeGreaterThanOrEqual(0);
       expect(t.row).toBeLessThan(GRID_ROWS);
     }
-  });
-});
-
-describe('quantile classes', () => {
-  it('splits values into equal-count classes', () => {
-    const classes = quantileClasses([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 5);
-    expect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(classes)).toEqual([0, 0, 1, 1, 2, 2, 3, 3, 4, 4]);
-  });
-
-  it('handles a single value', () => {
-    expect(quantileClasses([7], 5)(7)).toBe(0);
   });
 });

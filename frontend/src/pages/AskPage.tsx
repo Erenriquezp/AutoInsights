@@ -8,7 +8,7 @@ import type { AskAnswer } from '../lib/types';
 import { useApi } from '../lib/useApi';
 import './pages.css';
 
-const ColumnChart = lazy(() => import('../charts/ColumnChart'));
+const TrendChart = lazy(() => import('../charts/TrendChart'));
 
 type Status = { kind: 'idle' } | { kind: 'asking' } | { kind: 'answer'; answer: AskAnswer } | { kind: 'error'; message: string };
 
@@ -128,12 +128,12 @@ function Answer({ answer, fmt, copied, onCopy }: { answer: AskAnswer; fmt: (v: s
   else if (chart.type === 'line')
     body = (
       <Suspense fallback={<Loading height={260} />}>
-        <ColumnChart
+        <TrendChart
+          label={`${t.ask.answer}. ${answer.question}`}
           data={rows.map((r) => ({ key: String(r[xi]), label: String(r[xi]), value: Number(r[yi]) }))}
           formatValue={(v) => fmt(v)}
           formatAxis={f.number}
           valueName={columns[yi] ?? ''}
-          labelEvery={rows.length > 16 ? 4 : 1}
         />
       </Suspense>
     );

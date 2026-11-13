@@ -61,16 +61,9 @@
   }
 }
 
-/* what fills a panel: charts and lists grow with it, so a panel stretched to its row's
-   height has no empty band at the bottom */
-.chart-box {
-  position: relative;
-  flex: 1 1 auto;
-  width: 100%;
-}
-.chart-box > div {
-  position: absolute;
-  inset: 0;
+/* a panel that takes the whole row of a two-column grid */
+.grid > .span-all {
+  grid-column: 1 / -1;
 }
 @media (max-width: 860px) {
   .grid {
@@ -222,22 +215,25 @@
 .bar-fill {
   display: block;
   height: 100%;
-  background: var(--data-base);
-  border-radius: 2px;
+  background: var(--data-rest);
+  border-radius: 0 4px 4px 0;
 }
 .bar-value {
   text-align: right;
-  color: var(--text-secondary);
+  color: var(--ink-2);
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
 }
+/* emphasis is a brighter step of the data hue, not another color */
 .bar-list .is-highlight .bar-fill {
-  background: var(--accent);
+  background: var(--data);
 }
 .bar-list .is-highlight .bar-value,
 .bar-list .is-highlight .bar-label {
   color: var(--text-primary);
 }
 .bar-list .is-muted .bar-fill {
-  background: var(--data-muted);
+  background: var(--data-missing);
 }
 
 /* ---------------------------------------------------------------- states */
@@ -252,8 +248,28 @@
   color: var(--text-secondary);
   text-align: center;
 }
+/* loading: a quiet block the size of what is coming, so nothing jumps when the data arrives.
+   The words are there for screen readers only. */
 .state-loading {
-  flex-direction: row;
+  flex: 1 1 auto;
+  padding: 0;
+  border-radius: var(--radius-tile);
+  background: linear-gradient(100deg, rgb(255 255 255 / 0.035) 30%, rgb(255 255 255 / 0.08) 50%, rgb(255 255 255 / 0.035) 70%) 0 0 / 300% 100%;
+  animation: loading-sweep 1.6s ease-in-out infinite;
+}
+@keyframes loading-sweep {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .state-loading {
+    animation: none;
+    background: rgb(255 255 255 / 0.05);
+  }
 }
 .state-empty {
   align-items: flex-start;
@@ -265,17 +281,4 @@
 }
 .state-empty h2 {
   color: var(--text-primary);
-}
-.spinner {
-  width: 1.125rem;
-  height: 1.125rem;
-  border: 2px solid var(--line-strong);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }

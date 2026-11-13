@@ -1,68 +1,146 @@
-import { CartesianGrid, Legend, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from 'recharts';
-import type { MileagePoint } from '../lib/types';
-import { AXIS, axisWidth, GRID, TOOLTIP } from './theme';
+import { CartesianGrid, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from 'recharts';
+import { ChartTooltip } from '../components/ui';
+import { binnedMedians, niceScale, type Bin } from '../lib/stats';
+import { ChartFrame } from './ChartFrame';
+import { axisWidth, CHART } from './theme';
 
 export interface ScatterSeries {
   name: string;
-  points: MileagePoint[];
-  /** the vehicle being analyzed: accent circles; otherwise light graphite squares */
-  primary?: boolean;
+  points: { x: number; y: number }[];
 }
 
 interface ScatterPlotProps {
+  /** one or two clouds of points */
   series: ScatterSeries[];
-  xName: string;
-  yName: string;
+  label: string;
+  /** width of the x bands whose median is drawn as a line */
+  binSize: number;
+  medianName: string;
+  countName: string;
+  /** the range of a band in words ("60,000 to 80,000 miles") */
+  rangeTitle: (from: number, to: number) => string;
   formatX: (value: number) => string;
   formatY: (value: number) => string;
+  formatAxisY: (value: number) => string;
+  formatCount: (value: number) => string;
   height?: number;
 }
 
-export default function ScatterPlot({ series, xName, yName, formatX, formatY, height = 300 }: ScatterPlotProps) {
-  const single = series.length === 1;
+interface MedianDot extends Bin {
+  y: number;
+  series: number;
+}
+
+/** A median marker with a hit area much larger than the dot, so the pointer only has to be near. */
+function MedianShape({ cx, cy, fill }: { cx?: number; cy?: number; fill?: string }) {
+  if (cx === undefined || cy === undefined) return null;
   return (
-    <div className="chart-box" style={{ minHeight: `${height / 16}rem` }} aria-hidden="true">
+    <g>
+      <circle cx={cx} cy={cy} r={14} fill="transparent" />
+      <circle cx={cx} cy={cy} r={4.5} fill={fill} stroke={CHART.surface} strokeWidth={2} />
+    </g>
+  );
+}
+
+const NoShape = () => <g />;
+
+/**
+ * Every listing as a faint dot, and over them the median per band of x as a line: with
+ * hundreds of overlapping dots, the trend is only readable if it is drawn.
+ */
+export default function ScatterPlot({
+  series,
+  label,
+  binSize,
+  medianName,
+  countName,
+  rangeTitle,
+  formatX,
+  formatY,
+  formatAxisY,
+  formatCount,
+  height = 280,
+}: ScatterPlotProps) {
+  const single = series.length === 1;
+  const cloud = single ? [CHART.fill] : CHART.series;
+  const line = single ? [CHART.line] : CHART.series;
+  const all = series.flatMap((s) => s.points);
+  const xScale = niceScale(Math.max(0, ...all.map((p) => p.x)), 5);
+  const yScale = niceScale(Math.max(0, ...all.map((p) => p.y)));
+  const medians = series.map((s, i) => binnedMedians(s.points, binSize).map((bin): MedianDot => ({ ...bin, y: bin.median, series: i })));
+
+  return (
+    <ChartFrame label={label} height={height} legend={series.map((s, i) => ({ name: s.name, color: line[i], dashed: i === 1 }))}>
       <ResponsiveContainer>
-        <ScatterChart margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
-          <CartesianGrid stroke={GRID} />
+        <ScatterChart margin={{ top: 12, right: 16, bottom: 0, left: 0 }}>
+          <CartesianGrid stroke={CHART.grid} />
           <XAxis
+            {...CHART.axis}
             type="number"
-            dataKey="odometer"
-            name={xName}
-            {...AXIS}
+            dataKey="x"
+            domain={[0, xScale.max]}
+            ticks={xScale.ticks}
             tickFormatter={formatX}
-            domain={[0, 'dataMax']}
+            interval="equidistantPreserveStart"
+            minTickGap={16}
             tickMargin={8}
           />
           <YAxis
+            {...CHART.axis}
             type="number"
-            dataKey="price"
-            name={yName}
-            {...AXIS}
-            width={axisWidth([formatY(Math.max(0, ...series.flatMap((s) => s.points.map((p) => p.price))) * 1.1)])}
-            tickFormatter={formatY}
+            dataKey="y"
+            width={axisWidth(yScale.ticks.map(formatAxisY))}
+            domain={[0, yScale.max]}
+            ticks={yScale.ticks}
+            tickFormatter={formatAxisY}
           />
-          <ZAxis range={[28, 28]} />
+          <ZAxis range={[14, 14]} />
           <Tooltip
-            cursor={{ stroke: '#3a414c' }}
-            {...TOOLTIP}
-            formatter={(value, name) => [name === xName ? formatX(Number(value)) : formatY(Number(value)), name]}
+            cursor={false}
+            isAnimationActive={false}
+            content={({ active, payload }) => {
+              const dot = active ? (payload?.[0]?.payload as MedianDot | undefined) : undefined;
+              if (!dot || dot.median === undefined) return null;
+              return (
+                <ChartTooltip
+                  title={single ? rangeTitle(dot.from, dot.to) : `${series[dot.series].name}, ${rangeTitle(dot.from, dot.to)}`}
+                  rows={[
+                    { name: medianName, value: formatY(dot.median) },
+                    { name: countName, value: formatCount(dot.count) },
+                  ]}
+                />
+              );
+            }}
           />
-          {!single && <Legend wrapperStyle={{ color: '#9aa0a8', fontSize: 13, paddingTop: 8 }} />}
-          {series.map((s) => (
+          {series.map((s, i) => (
+            <Scatter key={s.name} data={s.points} fill={cloud[i]} fillOpacity={single ? 0.4 : 0.3} tooltipType="none" isAnimationActive={false} />
+          ))}
+          {/* under each median line, a wider line in the surface color keeps it apart from the dots */}
+          {medians.map((dots, i) => (
             <Scatter
-              key={s.name}
-              name={s.name}
-              data={s.points}
-              // one vehicle: neutral dots; two: the analyzed one is the evidence
-              fill={single ? 'var(--data-light)' : s.primary ? 'var(--accent)' : 'var(--data-light)'}
-              fillOpacity={single ? 0.55 : s.primary ? 0.75 : 0.5}
-              shape={s.primary || single ? 'circle' : 'square'}
+              key={`ring-${series[i].name}`}
+              data={dots}
+              line={{ stroke: CHART.surface, strokeWidth: 6 }}
+              lineJointType="monotoneX"
+              shape={NoShape}
+              tooltipType="none"
+              isAnimationActive={false}
+            />
+          ))}
+          {medians.map((dots, i) => (
+            <Scatter
+              key={`median-${series[i].name}`}
+              name={series[i].name}
+              data={dots}
+              fill={line[i]}
+              line={{ stroke: line[i], strokeWidth: 2.5, strokeDasharray: i === 1 ? '6 4' : undefined }}
+              lineJointType="monotoneX"
+              shape={<MedianShape />}
               isAnimationActive={false}
             />
           ))}
         </ScatterChart>
       </ResponsiveContainer>
-    </div>
+    </ChartFrame>
   );
 }

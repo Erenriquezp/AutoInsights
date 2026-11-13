@@ -103,14 +103,15 @@
   align-items: center;
   gap: 0.875rem;
 }
-/* legend key matching the charts: solid accent for the analyzed vehicle, dashed light for the other */
+/* legend key matching the charts: a solid stroke for the first vehicle, dashed for the second,
+   each in its series color */
 .compare-key {
   flex: 0 0 auto;
   width: 2rem;
-  border-top: 3px dashed var(--data-light);
+  border-top: 3px dashed var(--series-b);
 }
 .compare-card.is-primary .compare-key {
-  border-top: 3px solid var(--accent);
+  border-top: 3px solid var(--series-a);
 }
 .compare-model {
   font-family: var(--font-display);
@@ -252,6 +253,7 @@
   word-break: break-word;
 }
 .copy-button {
+  align-self: flex-start;
   margin-top: 0.75rem;
 }
 .ask-guard {
@@ -314,4 +316,15 @@
 .about-author {
   margin-top: 1rem;
   font-size: 0.875rem;
+}
+
+/* the "color by" switch above the map */
+.geo-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
 }
