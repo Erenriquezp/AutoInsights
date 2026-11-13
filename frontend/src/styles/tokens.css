@@ -130,7 +130,7 @@
   --text-xs: 0.8125rem;
   --text-sm: 0.875rem;
   --text-md: 0.9375rem;
-  --text-lg: 1.125rem;
-  --text-figure: clamp(1.75rem, 1.3rem + 1.1vw, 2.375rem);
-  --text-figure-lead: clamp(2.5rem, 1.7rem + 2.2vw, 3.75rem);
+  --text-lg: 1.0625rem;
+  --text-figure: clamp(1.5rem, 1.3rem + 0.5vw, 1.875rem);
+  --text-figure-lead: clamp(2.125rem, 1.7rem + 1.1vw, 2.875rem);
 }

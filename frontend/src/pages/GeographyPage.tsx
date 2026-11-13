@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import TileMap, { type TileValue } from '../charts/TileMap';
+import StateMap, { type StateValue } from '../charts/StateMap';
 import { STATE_NAMES } from '../charts/usStates';
 import { Card, ErrorState, KpiStrip, Loading, Segmented } from '../components/ui';
 import { useI18n } from '../i18n/context';
@@ -26,7 +26,7 @@ export default function GeographyPage() {
   const values = useMemo(
     () =>
       Object.fromEntries(
-        sorted.map((s): [string, TileValue] => [
+        sorted.map((s): [string, StateValue] => [
           s.state,
           {
             value: metric === 'listings' ? s.count : s.avg_price,
@@ -66,7 +66,7 @@ export default function GeographyPage() {
           />
         }
       >
-        <TileMap
+        <StateMap
           values={values}
           selected={current?.state ?? null}
           onSelect={setSelected}

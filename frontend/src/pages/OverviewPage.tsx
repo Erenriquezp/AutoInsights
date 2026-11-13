@@ -97,7 +97,10 @@ export default function OverviewPage() {
           }))
       : [];
   const missing = parts.filter((p) => p.tone === 'missing').reduce((sum, p) => sum + p.value, 0);
-  const conditionHelp = fill(t.overview.conditionHelp, { missing: totalConditions ? f.percent((missing / totalConditions) * 100, 0) : '—' });
+  const conditionHelp = t.overview.conditionHelp;
+  const stated = totalConditions ? f.percent(((totalConditions - missing) / totalConditions) * 100, 0) : '—';
+  const newest = years[years.length - 1];
+  const topBrand = brands.status === 'ready' ? brands.data[0] : undefined;
 
   return (
     <>
@@ -113,6 +116,7 @@ export default function OverviewPage() {
         <Card
           className="area-trend"
           title={t.overview.trendTitle}
+          figure={newest ? { value: f.money(newest.avg_price_year), label: fill(t.overview.trendFigure, { year: newest.year }) } : undefined}
           help={trendHelp}
           table={
             trend.status === 'ready'
@@ -126,35 +130,34 @@ export default function OverviewPage() {
           }
         >
           {trend.status === 'ready' ? (
-            <Suspense fallback={<Loading height={280} />}>
+            <Suspense fallback={<Loading height={220} />}>
               <TrendChart
                 label={`${t.overview.trendTitle}. ${trendHelp}`}
-                data={years.map((y, i) => ({
+                data={years.map((y) => ({
                   key: y.year,
                   label: String(y.year),
                   value: y.avg_price_year,
                   volume: y.volume_year,
                   title: `${t.overview.year} ${y.year}`,
                   detail: [{ name: t.overview.volume, value: f.number(y.volume_year) }],
-                  // the newest model year carries its figure: where the curve ends
-                  mark: i === years.length - 1 ? f.money(y.avg_price_year) : undefined,
                 }))}
                 formatValue={f.money}
                 formatAxis={f.compactMoney}
                 valueName={t.overview.price}
-                height={280}
+                height={220}
               />
             </Suspense>
           ) : trend.status === 'error' ? (
-            <ErrorState error={trend.error} onRetry={trend.retry} height={280} />
+            <ErrorState error={trend.error} onRetry={trend.retry} height={220} />
           ) : (
-            <Loading height={280} />
+            <Loading height={220} />
           )}
         </Card>
 
         <Card
           className="area-condition"
           title={t.overview.conditionTitle}
+          figure={conditions.status === 'ready' ? { value: stated, label: t.overview.conditionFigure } : undefined}
           help={conditionHelp}
           table={
             conditions.status === 'ready'
@@ -179,6 +182,7 @@ export default function OverviewPage() {
         <Card
           className="area-price"
           title={t.overview.histTitle}
+          figure={priceMedian !== null ? { value: f.money(Math.round(priceMedian / 100) * 100), label: t.overview.histFigure } : undefined}
           help={t.overview.histHelp}
           table={
             histogram.status === 'ready'
@@ -192,7 +196,7 @@ export default function OverviewPage() {
           }
         >
           {histogram.status === 'ready' ? (
-            <Suspense fallback={<Loading height={240} />}>
+            <Suspense fallback={<Loading height={180} />}>
               <Histogram
                 label={`${t.overview.histTitle}. ${t.overview.histHelp}`}
                 bins={histogram.data.map((b) => ({
@@ -204,19 +208,25 @@ export default function OverviewPage() {
                 formatCount={f.number}
                 formatTick={f.compactMoney}
                 tickEvery={20_000}
-                marker={priceMedian !== null ? { value: priceMedian, text: fill(t.overview.medianMark, { value: f.money(Math.round(priceMedian / 100) * 100) }) } : undefined}
+                marker={priceMedian !== null ? { value: priceMedian, text: t.overview.medianMark } : undefined}
+                height={180}
               />
             </Suspense>
           ) : histogram.status === 'error' ? (
-            <ErrorState error={histogram.error} onRetry={histogram.retry} height={240} />
+            <ErrorState error={histogram.error} onRetry={histogram.retry} height={180} />
           ) : (
-            <Loading height={240} />
+            <Loading height={180} />
           )}
         </Card>
 
         <Card
           className="area-mileage"
           title={t.overview.mileageTitle}
+          figure={
+            mileage.status === 'ready' && mileage.data.median_odometer !== null
+              ? { value: f.number(mileage.data.median_odometer), label: t.overview.mileageFigure }
+              : undefined
+          }
           help={t.overview.mileageHelp}
           table={
             mileage.status === 'ready'
@@ -233,7 +243,7 @@ export default function OverviewPage() {
           }
         >
           {mileage.status === 'ready' ? (
-            <Suspense fallback={<Loading height={240} />}>
+            <Suspense fallback={<Loading height={180} />}>
               <Histogram
                 label={`${t.overview.mileageTitle}. ${t.overview.mileageHelp}`}
                 bins={mileage.data.buckets.map((b) => ({
@@ -247,19 +257,29 @@ export default function OverviewPage() {
                 tickEvery={50_000}
                 marker={
                   mileage.data.median_odometer !== null
-                    ? { value: mileage.data.median_odometer, text: fill(t.overview.medianMark, { value: f.number(mileage.data.median_odometer) }) }
+                    ? { value: mileage.data.median_odometer, text: t.overview.medianMark }
                     : undefined
                 }
+                height={180}
               />
             </Suspense>
           ) : mileage.status === 'error' ? (
-            <ErrorState error={mileage.error} onRetry={mileage.retry} height={240} />
+            <ErrorState error={mileage.error} onRetry={mileage.retry} height={180} />
           ) : (
-            <Loading height={240} />
+            <Loading height={180} />
           )}
         </Card>
 
-        <Card className="area-brands" title={t.overview.brandsTitle} help={t.overview.brandsHelp}>
+        <Card
+          className="area-brands"
+          title={t.overview.brandsTitle}
+          figure={
+            topBrand && stats.status === 'ready'
+              ? { value: brandName(topBrand.manufacturer), label: fill(t.overview.brandsFigure, { pct: f.percent((topBrand.count / stats.data.total_vehicles) * 100, 0) }) }
+              : undefined
+          }
+          help={t.overview.brandsHelp}
+        >
           {brands.status === 'ready' ? (
             <BarList
               label={t.overview.brandsTitle}

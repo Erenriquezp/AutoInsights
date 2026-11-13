@@ -1,5 +1,5 @@
 import { Icon } from '../components/Icon';
-import { Card } from '../components/ui';
+import { Card, KpiStrip } from '../components/ui';
 import { useI18n } from '../i18n/context';
 import './pages.css';
 
@@ -15,11 +15,15 @@ export default function AboutPage() {
   ];
   return (
     <div className="about">
-      <Card title={t.about.title}>
-        <p className="about-lead">{t.about.body}</p>
+      {/* what this is, and its three numbers, side by side */}
+      <Card className="about-intro" title={t.about.title}>
+        <div className="about-intro-body">
+          <p className="about-lead">{t.about.body}</p>
+          <KpiStrip nested lead={false} columns={3} label={t.about.factsLabel} items={t.about.facts.map(([value, label]) => ({ label, value }))} />
+        </div>
       </Card>
 
-      {/* the pipeline is a sequence, so its steps are numbered and read left to right */}
+      {/* the pipeline is a sequence, so its steps are numbered and each hands over to the next */}
       <Card title={t.about.pipelineTitle}>
         <ol className="pipeline">
           {t.about.steps.map((step, i) => (
@@ -37,6 +41,11 @@ export default function AboutPage() {
 
       <div className="about-pair">
         <Card title={t.about.askTitle}>
+          <ol className="ask-flow">
+            {t.about.askFlow.map((stage) => (
+              <li key={stage}>{stage}</li>
+            ))}
+          </ol>
           <p>{t.about.askBody}</p>
         </Card>
         <Card title={t.about.sourceTitle}>
@@ -45,7 +54,7 @@ export default function AboutPage() {
             {links.map((link) => (
               <li key={link.href}>
                 <a href={link.href} target="_blank" rel="noreferrer">
-                  {link.label}
+                  <span>{link.label}</span>
                   <Icon name="external" size={16} />
                 </a>
               </li>

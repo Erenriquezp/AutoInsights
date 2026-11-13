@@ -93,13 +93,15 @@ interface CardProps {
   children: ReactNode;
   /** the chart's data as a table: adds the Chart / Table switch, always top right */
   table?: TableData;
+  /** the one figure the card leads with, and the words that say what it is */
+  figure?: { value: string; label: string };
   /** a control for the whole card, top right (when there is no table switch) */
   actions?: ReactNode;
   footnote?: ReactNode;
   className?: string;
 }
 
-export function Card({ title, help, children, table, actions, footnote, className = '' }: CardProps) {
+export function Card({ title, help, figure, children, table, actions, footnote, className = '' }: CardProps) {
   const { t } = useI18n();
   const [view, setView] = useState<'chart' | 'table'>('chart');
   const titleId = useId();
@@ -120,6 +122,12 @@ export function Card({ title, help, children, table, actions, footnote, classNam
             />
           ) : (
             actions
+          )}
+          {figure && (
+            <p className="card-figure">
+              <strong>{figure.value}</strong>
+              <span>{figure.label}</span>
+            </p>
           )}
           {help && <p className="card-help">{help}</p>}
         </header>

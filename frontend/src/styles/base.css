@@ -6,9 +6,9 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  /* Fluid root size: 16px on laptops and standard monitors, up to 18px on 2K/4K screens.
-     Everything sized in rem (layout, charts, type) grows with it. */
-  font-size: clamp(100%, 0.4vw + 10.5px, 112.5%);
+  /* The reader's own size (16px by default) at every window width. Scaling type up with the
+     window made text look inflated on wide screens next to chart labels that stay put. */
+  font-size: 100%;
   /* anchors and focused elements stop below the sticky header */
   scroll-padding-top: 6rem;
 }
@@ -34,9 +34,9 @@ h3 {
 
 h1 {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: clamp(1.5rem, 1.1rem + 1.2vw, 2rem);
-  letter-spacing: -0.01em;
+  font-weight: 560;
+  font-size: 1.5rem;
+  letter-spacing: 0;
 }
 
 h2 {

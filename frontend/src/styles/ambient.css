@@ -13,9 +13,10 @@ body::after {
 
 body::before {
   background:
-    radial-gradient(58rem 36rem at 92% -6%, rgb(var(--glow-amber) / 0.3), transparent 64%),
-    radial-gradient(50rem 42rem at -8% 72%, rgb(var(--glow-cyan) / 0.26), transparent 62%),
-    radial-gradient(48rem 34rem at 62% 114%, rgb(var(--glow-blue) / 0.3), transparent 64%);
+    radial-gradient(62rem 40rem at 92% -6%, rgb(var(--glow-amber) / 0.42), transparent 64%),
+    radial-gradient(54rem 46rem at -8% 68%, rgb(var(--glow-cyan) / 0.36), transparent 62%),
+    radial-gradient(52rem 38rem at 62% 114%, rgb(var(--glow-blue) / 0.44), transparent 64%),
+    radial-gradient(40rem 30rem at 38% 34%, rgb(var(--glow-blue) / 0.14), transparent 66%);
 }
 
 /* fine grain: hides the banding that wide dark gradients show on 8-bit screens */
@@ -28,9 +29,9 @@ body::after {
   /* smaller pools on a phone, or the whole screen turns amber */
   body::before {
     background:
-      radial-gradient(26rem 20rem at 100% -4%, rgb(var(--glow-amber) / 0.24), transparent 66%),
-      radial-gradient(24rem 26rem at -10% 60%, rgb(var(--glow-cyan) / 0.22), transparent 64%),
-      radial-gradient(26rem 22rem at 70% 108%, rgb(var(--glow-blue) / 0.26), transparent 66%);
+      radial-gradient(26rem 20rem at 100% -4%, rgb(var(--glow-amber) / 0.34), transparent 66%),
+      radial-gradient(24rem 26rem at -10% 60%, rgb(var(--glow-cyan) / 0.3), transparent 64%),
+      radial-gradient(26rem 22rem at 70% 108%, rgb(var(--glow-blue) / 0.36), transparent 66%);
   }
 }
 

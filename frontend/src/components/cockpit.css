@@ -141,6 +141,25 @@
   font-size: var(--text-sm);
   line-height: 1.5;
 }
+/* the figure a card leads with: what makes one card different from the next at a glance */
+.card-figure {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+}
+.card-figure strong {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 550;
+  line-height: 1.15;
+}
+.card-figure span {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
 .card-footnote {
   margin-top: var(--space-3);
   color: var(--ink-2);
@@ -267,9 +286,9 @@
 .kpi-value {
   font-family: var(--font-display);
   font-size: var(--text-figure);
-  font-weight: 600;
+  font-weight: 550;
   line-height: 1.1;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   color: var(--ink);
   white-space: nowrap;
 }
@@ -286,7 +305,7 @@
 .kpi-lead .kpi-value {
   font-size: var(--text-figure-lead);
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.005em;
 }
 .kpi-lead .kpi-note {
   margin-top: var(--space-2);
@@ -471,8 +490,10 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 /* equal figures line up from the top, whatever the length of their notes */
-.kpi-strip[data-layout^='cols'] .kpi {
-  justify-content: flex-start;
+@media (min-width: 641px) {
+  .kpi-strip[data-layout^='cols'] .kpi {
+    justify-content: flex-start;
+  }
 }
 /* inside a card: a raised tile, not a second sheet of glass */
 .kpi-strip.is-nested dl {
