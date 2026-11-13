@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useEffect, useState, type FormEvent } from 'react';
 import { STATE_NAMES } from '../charts/usStates';
 import { BarList, Button, Card, DataTable, KpiStrip, Loading } from '../components/ui';
 import { useI18n } from '../i18n/context';
@@ -87,6 +87,13 @@ export default function AskPage() {
       setCopied(false);
     }
   }
+
+  // "Copied" is a confirmation, not a state: it goes back after a moment
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 2500);
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   const failed = status.kind === 'error';
 
@@ -202,8 +209,8 @@ function Answer({ answer, asked, copied, onCopy }: { answer: AskAnswer; asked: s
         <pre className="sql-block">
           <code>{answer.sql}</code>
         </pre>
-        <Button className="copy-button" icon="copy" onClick={() => onCopy(answer.sql)}>
-          {copied ? t.ask.copied : t.ask.copy}
+        <Button className="copy-button" icon={copied ? 'check' : 'copy'} onClick={() => onCopy(answer.sql)}>
+          <span aria-live="polite">{copied ? t.ask.copied : t.ask.copy}</span>
         </Button>
         <ul className="ask-guard">
           <li>{t.ask.guardReadOnly}</li>

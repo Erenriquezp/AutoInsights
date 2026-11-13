@@ -1,7 +1,8 @@
 // The 50 states and DC as SVG paths: a real map with no map service and no geodata request.
 // Generated from the US Census cartographic boundaries distributed as us-atlas (public domain data),
 // already projected with Albers USA (Alaska and Hawaii moved under the Southwest) to a
-// 975 x 610 box and simplified for dashboard size. Do not edit the paths by hand.
+// 975 x 610 box and simplified for dashboard size. Do not edit by hand: change
+// scripts/generate-us-states.mjs and run "npm run generate:map".
 
 export interface StateShape {
   code: string;

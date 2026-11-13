@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate:map": "node scripts/generate-us-states.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",
@@ -26,8 +27,11 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "topojson-client": "^3.1.0",
+    "topojson-simplify": "^3.0.3",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.72.1",
+    "us-atlas": "^3.0.1",
     "vite": "^7.2.4",
     "vitest": "^5.1.0"
   }

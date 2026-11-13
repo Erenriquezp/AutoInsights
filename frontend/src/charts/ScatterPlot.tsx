@@ -72,7 +72,7 @@ export default function ScatterPlot({
   return (
     <ChartFrame label={label} height={height} legend={series.map((s, i) => ({ name: s.name, color: line[i], dashed: i === 1 }))}>
       <ResponsiveContainer>
-        <ScatterChart margin={{ top: 12, right: 16, bottom: 0, left: 0 }}>
+        <ScatterChart accessibilityLayer={false} margin={{ top: 12, right: 16, bottom: 0, left: 0 }}>
           <CartesianGrid stroke={CHART.grid} />
           <XAxis
             {...CHART.axis}

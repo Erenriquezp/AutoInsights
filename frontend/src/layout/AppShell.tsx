@@ -52,14 +52,33 @@ export function AppShell({ children }: { children: ReactNode }) {
     document.title = `${page.title} – ${t.app.name}`;
   }, [page.title, t.app.name]);
 
+  // A new page starts at its top, with keyboard focus on the content: the next Tab goes into
+  // the page instead of back through the menu. Not on first load, where focus is the browser's.
+  const firstPage = useRef(true);
+  useEffect(() => {
+    if (firstPage.current) {
+      firstPage.current = false;
+      return;
+    }
+    window.scrollTo(0, 0);
+    document.getElementById('content')?.focus({ preventScroll: true });
+  }, [location.pathname]);
+
+  // Closing the drawer by hand (its button, Escape, the backdrop) gives focus back to the menu
+  // button. That has to wait until the page behind is no longer inert, so the effect does it.
+  const returnFocus = useRef(false);
   const closeDrawer = useCallback(() => {
+    returnFocus.current = true;
     setDrawerOpen(false);
-    menuButton.current?.focus();
   }, []);
 
   // Drawer: focus the close button when it opens; Escape closes it.
   useEffect(() => {
-    if (!drawerOpen) return;
+    if (!drawerOpen) {
+      if (returnFocus.current) menuButton.current?.focus();
+      returnFocus.current = false;
+      return;
+    }
     closeButton.current?.focus();
     const onKey = (event: KeyboardEvent) => event.key === 'Escape' && closeDrawer();
     document.addEventListener('keydown', onKey);
@@ -115,7 +134,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
       <div className="drawer-backdrop" onClick={closeDrawer} aria-hidden="true" />
 
-      <div className="main-column">
+      <div className="main-column" inert={drawerOpen}>
         <header className="topbar">
           <button
             ref={menuButton}

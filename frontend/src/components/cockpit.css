@@ -208,6 +208,16 @@
   border-radius: var(--radius-tile);
   background: rgb(0 0 0 / 0.18);
 }
+/* after the reader switches between chart and table, the view that arrives fades in */
+.card-body[data-switched] > * {
+  animation: view-in 180ms var(--ease);
+}
+@keyframes view-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
 /* in place of a chart: at least as tall as the chart, taller when the row stretches the card */
 .card-body[data-view='table'] > .table-region {
   flex: 1 1 0;
@@ -324,6 +334,14 @@
   height: 100%;
   border-radius: var(--radius-pill);
   background: var(--data);
+  /* the one movement on page load: the meter fills to its share */
+  transform-origin: left;
+  animation: meter-fill 900ms var(--ease) 150ms both;
+}
+@keyframes meter-fill {
+  from {
+    transform: scaleX(0);
+  }
 }
 
 /* less room: the lead on a row of its own, the others in equal columns under it */

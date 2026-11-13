@@ -14,7 +14,7 @@
 - **Data quality first:** explicit schema, multi-line CSV parsing, range validation and model-name normalization. **426,880 raw listings → 354,649 clean records.**
 - **Pre-aggregated serving layer:** the ETL writes 8 gold tables as Parquet (2.9 MB), loaded into an in-memory DuckDB by the API, with no database server to run. See the [data model](docs/data-model.md).
 - **Ask the data:** questions in plain English become SQL written by a free-tier LLM (Groq, with Gemini as fallback), checked by a SQL guard and run on a locked-down DuckDB; the SQL is always shown. **96.7 % accuracy** on a 30-question evaluation set ([method and results](docs/evaluation.md), [security](docs/security.md)).
-- **Dashboard:** React 19 + TypeScript with a collapsible side menu, English and Spanish, shareable vehicle links and a self-contained US tile map. Pages: market overview, vehicle analysis (price by model year, five-year value change, price vs. mileage), geography, Ask the data and about. Every chart can be shown as a table.
+- **Dashboard:** React 19 + TypeScript with a collapsible side menu, English and Spanish, shareable vehicle links and a self-contained US map (Census state boundaries drawn as SVG, no map service). Pages: market overview, vehicle analysis (price by model year, value kept with age, price vs. mileage with a median line, side-by-side comparison), geography, Ask the data and about. Every chart can be shown as a table, works with the keyboard and screen readers, and its colors are checked for color-blind readers.
 
 ## Architecture
 

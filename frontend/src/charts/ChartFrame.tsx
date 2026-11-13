@@ -16,7 +16,12 @@ interface ChartFrameProps {
   children: ReactNode;
 }
 
-/** The box every chart is drawn in: one accessible name, a legend when it is needed. */
+/**
+ * The box every chart is drawn in: one accessible name, a legend when it is needed.
+ * To a screen reader or the keyboard a chart is one image with that name; its numbers are
+ * reachable in the card's table view. (So the charts inside turn off Recharts' own keyboard
+ * layer, which would add tab stops inside an image.)
+ */
 export function ChartFrame({ label, height, legend, children }: ChartFrameProps) {
   return (
     <div className="chart-wrap">

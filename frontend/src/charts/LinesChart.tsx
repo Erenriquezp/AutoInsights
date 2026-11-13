@@ -47,7 +47,7 @@ export default function LinesChart({ series, label, titleFor, formatX, formatVal
       legend={series.map((s, i) => ({ name: s.name, color: colors[i], dashed: i === 1 }))}
     >
       <ResponsiveContainer>
-        <LineChart data={rows} margin={{ top: 22, right: 16, bottom: 0, left: 0 }}>
+        <LineChart accessibilityLayer={false} data={rows} margin={{ top: 22, right: 16, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} stroke={CHART.grid} />
           <XAxis
             {...CHART.axis}

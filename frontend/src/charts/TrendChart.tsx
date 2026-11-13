@@ -44,7 +44,7 @@ export default function TrendChart({ data, label, valueName, formatValue, format
     <ChartFrame label={label} height={height}>
       <div className="chart-main">
         <ResponsiveContainer>
-          <ComposedChart data={data} syncId={id} margin={{ top: 22, right: 12, bottom: hasVolume ? 8 : 0, left: 0 }}>
+          <ComposedChart accessibilityLayer={false} data={data} syncId={id} margin={{ top: 22, right: 12, bottom: hasVolume ? 8 : 0, left: 0 }}>
             <defs>
               <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={CHART.line} stopOpacity={0.34} />
@@ -94,7 +94,7 @@ export default function TrendChart({ data, label, valueName, formatValue, format
       {hasVolume && (
         <div className="chart-strip">
           <ResponsiveContainer>
-            <BarChart data={data} syncId={id} margin={{ top: 6, right: 12, bottom: 0, left: yWidth }} barCategoryGap="22%">
+            <BarChart accessibilityLayer={false} data={data} syncId={id} margin={{ top: 6, right: 12, bottom: 0, left: yWidth }} barCategoryGap="22%">
               <XAxis {...xAxis} />
               <YAxis hide domain={[0, 'dataMax']} />
               <Tooltip cursor={CHART.cursorBand} content={() => null} isAnimationActive={false} />

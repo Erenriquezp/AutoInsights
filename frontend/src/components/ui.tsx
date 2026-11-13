@@ -35,7 +35,7 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
   return (
     <div className="segmented" role="group" aria-label={label}>
       {options.map((o) => (
-        <button key={o.value} type="button" aria-pressed={value === o.value} onClick={() => onChange(o.value)}>
+        <button key={o.value} type="button" aria-pressed={value === o.value} title={o.icon ? o.label : undefined} onClick={() => onChange(o.value)}>
           {o.icon && <Icon name={o.icon} size={16} />}
           <span>{o.label}</span>
         </button>
@@ -104,6 +104,8 @@ interface CardProps {
 export function Card({ title, help, figure, children, table, actions, footnote, className = '' }: CardProps) {
   const { t } = useI18n();
   const [view, setView] = useState<'chart' | 'table'>('chart');
+  // set once the reader has switched views: from then on the new view fades in
+  const [switched, setSwitched] = useState(false);
   const titleId = useId();
   return (
     <section className={`card ${className}`} aria-labelledby={title ? titleId : undefined}>
@@ -114,7 +116,10 @@ export function Card({ title, help, figure, children, table, actions, footnote, 
             <Segmented
               label={t.data.view}
               value={view}
-              onChange={setView}
+              onChange={(next) => {
+                setView(next);
+                setSwitched(true);
+              }}
               options={[
                 { value: 'chart', label: t.data.chart, icon: 'chart' },
                 { value: 'table', label: t.data.table, icon: 'table' },
@@ -132,7 +137,7 @@ export function Card({ title, help, figure, children, table, actions, footnote, 
           {help && <p className="card-help">{help}</p>}
         </header>
       )}
-      <div className="card-body" data-view={view}>{view === 'table' && table ? <DataTable {...table} /> : children}</div>
+      <div className="card-body" data-view={view} data-switched={switched || undefined}>{view === 'table' && table ? <DataTable {...table} /> : children}</div>
       {footnote && <p className="card-footnote">{footnote}</p>}
     </section>
   );

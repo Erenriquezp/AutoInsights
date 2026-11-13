@@ -36,7 +36,7 @@ export default function Histogram({ bins, label, countName, formatCount, formatT
   return (
     <ChartFrame label={label} height={height}>
       <ResponsiveContainer>
-        <BarChart data={bins} margin={{ top: 24, right: 8, bottom: 0, left: 0 }} barCategoryGap={1}>
+        <BarChart accessibilityLayer={false} data={bins} margin={{ top: 24, right: 8, bottom: 0, left: 0 }} barCategoryGap={1}>
           <CartesianGrid vertical={false} stroke={CHART.grid} />
           <XAxis {...CHART.axis} dataKey="start" ticks={ticks} tickFormatter={formatTick} interval="equidistantPreserveStart" minTickGap={18} tickMargin={8} />
           <YAxis {...CHART.axis} width={axisWidth(scale.ticks.map(formatCount))} domain={[0, scale.max]} ticks={scale.ticks} tickFormatter={formatCount} />
