@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { EmptyState, ErrorState, KpiBand, Loading, Panel, type Readout } from '../components/ui';
+import { Button, Card, EmptyState, ErrorState, KpiStrip, Loading, type Figure } from '../components/ui';
 import { useI18n } from '../i18n/context';
 import { api, ApiError } from '../lib/api';
 import { brandName, modelName, vehicleName } from '../lib/format';
@@ -77,16 +77,14 @@ export default function VehiclePage() {
       </div>
       {shown && !comparing && !addingComparison && analysis.status === 'ready' && (
         <div>
-          <button type="button" className="btn" onClick={() => setAddingComparison(true)}>
-            {t.compare.add}
-          </button>
+          <Button onClick={() => setAddingComparison(true)}>{t.compare.add}</Button>
         </div>
       )}
 
       {!shown && (
         <EmptyState title={t.vehicle.emptyTitle}>
           <p>{t.vehicle.emptyBody}</p>
-          <Link className="btn" to="/vehicle?brand=ford&model=f-150">
+          <Link className="button button-secondary button-md" to="/vehicle?brand=ford&model=f-150">
             {t.vehicle.tryExample}
           </Link>
         </EmptyState>
@@ -115,29 +113,30 @@ export default function VehiclePage() {
 
 /* ---------------------------------------------------------------- one vehicle */
 
-function useReadouts() {
+/** The key figures of a vehicle. The loss over five years comes first: it is what the page is about. */
+function useFigures() {
   const { t, f, fill } = useI18n();
-  return (analysis: VehicleAnalysis, points: MileagePoint[] | null, evidence: boolean): Readout[] => {
+  return (analysis: VehicleAnalysis, points: MileagePoint[] | null): Figure[] => {
     const { summary, history } = analysis;
     const change = summary.five_year_change;
-    const readouts: Readout[] = [
+    const figures: Figure[] = [
+      change
+        ? { label: t.vehicle.fiveYears, value: f.signedPercent(change.pct), note: fill(t.vehicle.fiveYearsNote, { from: change.from_year, to: change.to_year }) }
+        : { label: t.vehicle.fiveYears, value: '—', note: t.vehicle.fiveYearsNone },
       { label: t.vehicle.avgPrice, value: f.money(summary.avg_price), note: t.vehicle.avgPriceNote },
       { label: t.vehicle.listings, value: f.number(summary.total_samples), note: fill(t.vehicle.listingsNote, { years: history.length }) },
-      change
-        ? { label: t.vehicle.fiveYears, value: f.signedPercent(change.pct), note: fill(t.vehicle.fiveYearsNote, { from: change.from_year, to: change.to_year }), evidence }
-        : { label: t.vehicle.fiveYears, value: '—', note: t.vehicle.fiveYearsNone },
     ];
     if (points) {
       const m = median(points.map((p) => p.odometer));
-      readouts.push({ label: t.compare.medianOdometer, value: m === null ? '—' : f.number(Math.round(m)), note: t.compare.medianOdometerNote });
+      figures.push({ label: t.compare.medianOdometer, value: m === null ? '—' : f.number(Math.round(m)), note: t.compare.medianOdometerNote });
     }
-    return readouts;
+    return figures;
   };
 }
 
 function SingleVehicle({ brand, model, analysis, mileage }: { brand: string; model: string; analysis: VehicleAnalysis; mileage: Resource<MileagePoint[]> }) {
   const { t, f, fill } = useI18n();
-  const readoutsFor = useReadouts();
+  const figuresFor = useFigures();
   const { summary, history } = analysis;
   const change = summary.five_year_change;
   const min = summary.min_year_listings;
@@ -158,7 +157,7 @@ function SingleVehicle({ brand, model, analysis, mileage }: { brand: string; mod
 
   return (
     <>
-      <section className="vehicle-head" aria-labelledby="vehicle-name">
+      <section className="card vehicle-head" aria-labelledby="vehicle-name">
         <div className="vehicle-title">
           <p className="vehicle-brand">{brandName(brand)}</p>
           <h2 id="vehicle-name" className="vehicle-model">{modelName(model)}</h2>
@@ -173,11 +172,11 @@ function SingleVehicle({ brand, model, analysis, mileage }: { brand: string; mod
               : fill(t.vehicle.summaryNoChange, { listings: f.number(summary.total_samples) })}
           </p>
         </div>
-        <KpiBand label={vehicleName(brand, model)} items={readoutsFor(analysis, null, true)} />
+        <KpiStrip nested label={vehicleName(brand, model)} items={figuresFor(analysis, null)} />
       </section>
 
       <div className="grid">
-        <Panel
+        <Card
           className="wide"
           title={t.vehicle.priceTitle}
           help={priceHelp}
@@ -207,9 +206,9 @@ function SingleVehicle({ brand, model, analysis, mileage }: { brand: string; mod
               height={300}
             />
           </Suspense>
-        </Panel>
+        </Card>
 
-        <Panel
+        <Card
           className="narrow"
           title={t.vehicle.retentionTitle}
           help={retentionHelp}
@@ -240,9 +239,9 @@ function SingleVehicle({ brand, model, analysis, mileage }: { brand: string; mod
               />
             </Suspense>
           ) : (
-            <p className="panel-help">{t.vehicle.fiveYearsNone}</p>
+            <p className="card-help">{t.vehicle.fiveYearsNone}</p>
           )}
-        </Panel>
+        </Card>
 
         <MileagePanel
           title={t.vehicle.mileageTitle}
@@ -264,7 +263,7 @@ interface Side {
 
 function Comparison({ a, b }: { a: Side & { analysis: VehicleAnalysis }; b: Side & { analysis: Resource<VehicleAnalysis> } }) {
   const { t, f, fill } = useI18n();
-  const readoutsFor = useReadouts();
+  const figuresFor = useFigures();
   const nameA = vehicleName(a.brand, a.model);
   const nameB = vehicleName(b.brand, b.model);
 
@@ -295,7 +294,7 @@ function Comparison({ a, b }: { a: Side & { analysis: VehicleAnalysis }; b: Side
     <>
       <section className="compare-head" aria-label={t.compare.title}>
         {sides.map(({ key, side, analysis, primary }) => (
-          <div key={key} className={`compare-card${primary ? ' is-primary' : ''}`}>
+          <div key={key} className={`card compare-card${primary ? ' is-primary' : ''}`}>
             <div className="compare-title">
               <span className="compare-key" aria-hidden="true" />
               <div>
@@ -303,13 +302,13 @@ function Comparison({ a, b }: { a: Side & { analysis: VehicleAnalysis }; b: Side
                 <h2 className="compare-model">{modelName(side.model)}</h2>
               </div>
             </div>
-            <KpiBand label={vehicleName(side.brand, side.model)} items={readoutsFor(analysis, pointsOf(side.mileage), primary)} />
+            <KpiStrip nested lead={false} columns={2} label={vehicleName(side.brand, side.model)} items={figuresFor(analysis, pointsOf(side.mileage))} />
           </div>
         ))}
       </section>
 
       <div className="grid">
-        <Panel
+        <Card
           className="wide"
           title={t.compare.priceTitle}
           help={priceHelp}
@@ -340,9 +339,9 @@ function Comparison({ a, b }: { a: Side & { analysis: VehicleAnalysis }; b: Side
               height={300}
             />
           </Suspense>
-        </Panel>
+        </Card>
 
-        <Panel
+        <Card
           className="narrow"
           title={t.vehicle.retentionTitle}
           help={t.compare.retentionHelp}
@@ -372,7 +371,7 @@ function Comparison({ a, b }: { a: Side & { analysis: VehicleAnalysis }; b: Side
               height={300}
             />
           </Suspense>
-        </Panel>
+        </Card>
 
         <MileagePanel
           title={t.compare.mileageTitle}
@@ -403,7 +402,7 @@ function MileagePanel({ title, help, series }: { title: string; help: string; se
   const single = series.length === 1;
 
   return (
-    <Panel
+    <Card
       className="span-all"
       title={title}
       help={help}
@@ -425,7 +424,7 @@ function MileagePanel({ title, help, series }: { title: string; help: string; se
       ) : !ready ? (
         <Loading height={300} />
       ) : empty ? (
-        <p className="panel-help">{t.vehicle.noMileage}</p>
+        <p className="card-help">{t.vehicle.noMileage}</p>
       ) : (
         <Suspense fallback={<Loading height={300} />}>
           <ScatterPlot
@@ -443,7 +442,7 @@ function MileagePanel({ title, help, series }: { title: string; help: string; se
           />
         </Suspense>
       )}
-    </Panel>
+    </Card>
   );
 }
 
@@ -471,7 +470,7 @@ function Picker({ label, brand, model, submit, onShow, onRemove, secondary = fal
   }
 
   return (
-    <form className={`panel picker${secondary ? ' is-secondary' : ''}`} onSubmit={onSubmit} aria-label={label}>
+    <form className={`card picker${secondary ? ' is-secondary' : ''}`} onSubmit={onSubmit} aria-label={label}>
       <p className="picker-title">{label}</p>
       <label className="field">
         {t.vehicle.brand}
@@ -506,13 +505,13 @@ function Picker({ label, brand, model, submit, onShow, onRemove, secondary = fal
         </select>
       </label>
       <div className="picker-actions">
-        <button type="submit" className={secondary ? 'btn' : 'btn btn-primary'} disabled={!draftBrand || !draftModel}>
+        <Button type="submit" variant={secondary ? 'secondary' : 'primary'} disabled={!draftBrand || !draftModel}>
           {submit}
-        </button>
+        </Button>
         {onRemove && (
-          <button type="button" className="text-button" onClick={onRemove}>
+          <Button variant="quiet" onClick={onRemove}>
             {t.compare.remove}
-          </button>
+          </Button>
         )}
       </div>
       {!secondary && <p className="picker-note">{t.vehicle.modelsNote}</p>}

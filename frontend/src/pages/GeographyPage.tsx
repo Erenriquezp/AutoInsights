@@ -1,13 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import TileMap, { type TileValue } from '../charts/TileMap';
 import { STATE_NAMES } from '../charts/usStates';
-import { DataTable, ErrorState, KpiBand, Loading, Panel, Segmented } from '../components/ui';
+import { Card, ErrorState, KpiStrip, Loading, Segmented } from '../components/ui';
 import { useI18n } from '../i18n/context';
 import { api } from '../lib/api';
+import type { StateStats } from '../lib/types';
 import { useApi } from '../lib/useApi';
 import './pages.css';
 
 type Metric = 'listings' | 'price';
+
+const stateName = (code: string) => STATE_NAMES[code] ?? code.toUpperCase();
 
 export default function GeographyPage() {
   const { t, f, fill } = useI18n();
@@ -35,19 +38,23 @@ export default function GeographyPage() {
   );
 
   if (states.status === 'loading') return <Loading height={420} />;
-  if (states.status === 'error') return <ErrorState error={states.error} onRetry={states.retry} height={420} />;
+  if (states.status === 'error') {
+    return (
+      <Card>
+        <ErrorState error={states.error} onRetry={states.retry} height={320} />
+      </Card>
+    );
+  }
 
   const current = sorted.find((s) => s.state === (selected ?? sorted[0]?.state));
 
   return (
     <div className="grid">
-      <Panel
+      <Card
         className="wide"
         title={t.geography.mapTitle}
         help={`${t.geography.mapHelp} ${metric === 'listings' ? t.geography.mapHelpListings : t.geography.mapHelpPrice}`}
-      >
-        <div className="geo-controls">
-          <span aria-hidden="true">{t.geography.colorBy}</span>
+        actions={
           <Segmented
             label={t.geography.colorBy}
             value={metric}
@@ -57,7 +64,8 @@ export default function GeographyPage() {
               { value: 'price', label: t.geography.avgPrice },
             ]}
           />
-        </div>
+        }
+      >
         <TileMap
           values={values}
           selected={current?.state ?? null}
@@ -68,28 +76,86 @@ export default function GeographyPage() {
         />
         {current && (
           <div className="geo-selected" aria-live="polite">
-            <KpiBand
+            <KpiStrip
+              nested
+              lead={false}
+              columns={3}
               label={t.geography.selected}
               items={[
-                { label: t.geography.selected, value: STATE_NAMES[current.state] ?? current.state.toUpperCase(), text: true },
-                { label: t.geography.listings, value: f.number(current.count), note: `${f.percent((current.count / total) * 100)}, #${sorted.indexOf(current) + 1}`, evidence: true },
+                { label: t.geography.selected, value: stateName(current.state), text: true },
+                {
+                  label: t.geography.listings,
+                  value: f.number(current.count),
+                  note: fill(t.geography.listingsNote, { pct: f.percent((current.count / total) * 100), rank: sorted.indexOf(current) + 1, total: sorted.length }),
+                },
                 { label: t.geography.avgPrice, value: f.money(current.avg_price) },
               ]}
             />
           </div>
         )}
-      </Panel>
+      </Card>
 
-      <Panel className="narrow geo-list" title={t.geography.tableTitle} help={t.geography.tableHelp}>
-        <div className="geo-table">
-          <DataTable
-            caption={t.geography.tableTitle}
-            columns={[t.geography.state, t.geography.listings, t.geography.avgPrice]}
-            numeric={[1, 2]}
-            rows={sorted.map((s) => [STATE_NAMES[s.state] ?? s.state.toUpperCase(), f.number(s.count), f.money(s.avg_price)])}
-          />
-        </div>
-      </Panel>
+      <Card className="narrow geo-list" title={t.geography.tableTitle} help={t.geography.tableHelp}>
+        <StateList states={sorted} selected={current?.state ?? null} onSelect={setSelected} />
+      </Card>
+    </div>
+  );
+}
+
+/**
+ * Every state as a row: a bar for its listings, its average price. The list and the map
+ * share one selection: choosing a state in either marks it in both.
+ */
+function StateList({ states, selected, onSelect }: { states: StateStats[]; selected: string | null; onSelect: (code: string) => void }) {
+  const { t, f } = useI18n();
+  const region = useRef<HTMLDivElement>(null);
+  const max = Math.max(1, ...states.map((s) => s.count));
+
+  // bring the chosen row into view inside the list only: the page itself must not jump
+  useEffect(() => {
+    const box = region.current;
+    const row = box?.querySelector<HTMLElement>('tr[data-selected="true"]');
+    if (!box || !row) return;
+    const head = box.querySelector('thead')?.getBoundingClientRect().height ?? 0;
+    const top = row.offsetTop - head;
+    if (top < box.scrollTop) box.scrollTop = top;
+    else if (row.offsetTop + row.offsetHeight > box.scrollTop + box.clientHeight) box.scrollTop = row.offsetTop + row.offsetHeight - box.clientHeight;
+  }, [selected]);
+
+  return (
+    <div ref={region} className="table-region state-list" tabIndex={0} role="region" aria-label={t.geography.tableTitle}>
+      <table className="data-table">
+        <caption className="visually-hidden">{t.geography.tableTitle}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{t.geography.state}</th>
+            <th scope="col" className="num">
+              {t.geography.listings}
+            </th>
+            <th scope="col" className="num">
+              {t.geography.avgPrice}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {states.map((s) => (
+            <tr key={s.state} data-selected={selected === s.state}>
+              <th scope="row">
+                <button type="button" className="state-pick" aria-pressed={selected === s.state} onClick={() => onSelect(s.state)}>
+                  {stateName(s.state)}
+                </button>
+              </th>
+              <td className="num">
+                {f.number(s.count)}
+                <span className="cell-bar" aria-hidden="true">
+                  <span style={{ width: `${Math.max(1, (s.count / max) * 100)}%` }} />
+                </span>
+              </td>
+              <td className="num">{f.money(s.avg_price)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

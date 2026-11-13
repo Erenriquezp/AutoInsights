@@ -141,3 +141,15 @@
   border-radius: 3px;
   background: var(--tile-bg);
 }
+
+/* phone: a tighter grid keeps every tile at 24 px or more, the minimum target size */
+@media (max-width: 480px) {
+  .tile-map {
+    gap: 3px;
+  }
+  .tile {
+    border-radius: 4px;
+    font-size: 0.625rem;
+    letter-spacing: -0.02em;
+  }
+}

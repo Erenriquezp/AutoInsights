@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import type { SharePart } from '../charts/StackedShare';
 import StackedShare from '../charts/StackedShare';
-import { BarList, Card, EmptyState, ErrorState, KpiStrip, Loading, Panel, type Figure } from '../components/ui';
+import { BarList, Card, EmptyState, ErrorState, KpiStrip, Loading, type Figure } from '../components/ui';
 import { useI18n } from '../i18n/context';
 import { api } from '../lib/api';
 import { brandName } from '../lib/format';
@@ -32,6 +32,16 @@ export default function OverviewPage() {
   const histogram = useApi(api.histogram, []);
   const brands = useApi(() => api.topBrands(10), []);
   const mileage = useApi(api.mileageDistribution, []);
+
+  // when nothing could be loaded, say it once instead of once per card
+  const resources = [stats, trend, conditions, histogram, brands, mileage];
+  if (resources.every((r) => r.status === 'error')) {
+    return (
+      <Card>
+        <ErrorState error={stats.error} onRetry={() => resources.forEach((r) => r.retry())} height={320} />
+      </Card>
+    );
+  }
 
   if (stats.status === 'ready' && stats.data.total_vehicles === 0) {
     return <EmptyState title={t.states.empty}>{t.states.noGold}</EmptyState>;
@@ -94,7 +104,7 @@ export default function OverviewPage() {
       {figures ? (
         <KpiStrip label={t.overview.kpis} items={figures} />
       ) : stats.status === 'error' ? (
-        <ErrorState error={stats.error} onRetry={stats.retry} height={120} refined />
+        <ErrorState error={stats.error} onRetry={stats.retry} height={120} />
       ) : (
         <Loading height={128} />
       )}
@@ -136,13 +146,13 @@ export default function OverviewPage() {
               />
             </Suspense>
           ) : trend.status === 'error' ? (
-            <ErrorState error={trend.error} onRetry={trend.retry} height={280} refined />
+            <ErrorState error={trend.error} onRetry={trend.retry} height={280} />
           ) : (
             <Loading height={280} />
           )}
         </Card>
 
-        <Panel
+        <Card
           className="area-condition"
           title={t.overview.conditionTitle}
           help={conditionHelp}
@@ -164,9 +174,9 @@ export default function OverviewPage() {
           ) : (
             <Loading />
           )}
-        </Panel>
+        </Card>
 
-        <Panel
+        <Card
           className="area-price"
           title={t.overview.histTitle}
           help={t.overview.histHelp}
@@ -202,9 +212,9 @@ export default function OverviewPage() {
           ) : (
             <Loading height={240} />
           )}
-        </Panel>
+        </Card>
 
-        <Panel
+        <Card
           className="area-mileage"
           title={t.overview.mileageTitle}
           help={t.overview.mileageHelp}
@@ -247,9 +257,9 @@ export default function OverviewPage() {
           ) : (
             <Loading height={240} />
           )}
-        </Panel>
+        </Card>
 
-        <Panel className="area-brands" title={t.overview.brandsTitle} help={t.overview.brandsHelp}>
+        <Card className="area-brands" title={t.overview.brandsTitle} help={t.overview.brandsHelp}>
           {brands.status === 'ready' ? (
             <BarList
               label={t.overview.brandsTitle}
@@ -265,7 +275,7 @@ export default function OverviewPage() {
           ) : (
             <Loading />
           )}
-        </Panel>
+        </Card>
       </div>
     </>
   );

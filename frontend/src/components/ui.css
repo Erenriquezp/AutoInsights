@@ -1,58 +1,14 @@
-/* ---------------------------------------------------------------- panels */
+/* Shared pieces that are not glass components: the two-column page grid, the table's base,
+   ranked bars and the loading / error / empty states. Cards, buttons, figures and chart
+   furniture are in cockpit.css. */
 
-.panel {
-  min-width: 0;
-  /* a column, so the body can take whatever height the row gives the panel */
-  display: flex;
-  flex-direction: column;
-  padding: 1.375rem 1.5rem 1.5rem;
-  background: var(--bg-elevated);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-panel);
-}
-/* title and help left, the button right: it stays put however long the help is */
-.panel-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 1rem;
-  margin-bottom: 1.125rem;
-}
-.panel-help {
-  margin-top: 0.25rem;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  max-width: 68ch;
-}
-.panel-footnote {
-  margin-top: 0.875rem;
-  color: var(--text-secondary);
-  font-size: 0.8125rem;
-}
+/* ---------------------------------------------------------------- page grid
+   A wide card and a narrow one, side by side when the page (not the window) has room. */
 
-.text-button {
-  flex: 0 0 auto;
-  min-height: 2.25rem;
-  padding: 0 0.75rem;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.text-button:hover {
-  color: var(--text-primary);
-  border-color: var(--text-secondary);
-}
-
-/* a wide panel and a narrow one, side by side when the page (not the window) has room */
 .grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 1.5rem;
+  gap: var(--space-5);
 }
 @container page (min-width: 56rem) {
   .grid {
@@ -60,126 +16,25 @@
     grid-template-columns: minmax(0, 2fr) minmax(25rem, 1fr);
   }
 }
-
-/* a panel that takes the whole row of a two-column grid */
+/* a card that takes the whole row */
 .grid > .span-all {
   grid-column: 1 / -1;
 }
 @media (max-width: 860px) {
   .grid {
-    gap: 1rem;
-  }
-  .panel {
-    padding: 1.125rem 1rem 1.25rem;
+    gap: var(--space-4);
   }
 }
 
-/* ---------------------------------------------------------------- tables */
+/* ---------------------------------------------------------------- table base */
 
-.table-scroll {
-  overflow-x: auto;
-}
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
 }
 .data-table th {
-  padding: 0.5rem 0.625rem;
   text-align: left;
-  font-weight: 600;
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--line-strong);
   white-space: nowrap;
-}
-.data-table td {
-  padding: 0.5rem 0.625rem;
-  border-bottom: 1px solid var(--line-soft);
-}
-.data-table .num {
-  text-align: right;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------------------------------------------------------------- KPI band: dimension readouts
-   Each figure sits under a drawing's dimension line: a rule with end ticks, as on a part
-   drawing. This is the one bold element of the dashboard. */
-
-/* Cells wrap and the last row stretches, so three or four figures never leave an empty cell.
-   Each cell draws its right and bottom rule; the band clips the outer ones. */
-.kpi-band dl {
-  display: flex;
-  flex-wrap: wrap;
-  margin: 0;
-  overflow: hidden;
-  background: var(--bg-elevated);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-panel);
-}
-.readout {
-  position: relative;
-  flex: 1 1 13rem;
-  margin: 0 -1px -1px 0;
-  padding: 1.75rem 1.5rem 1.25rem;
-  border-right: 1px solid var(--line-soft);
-  border-bottom: 1px solid var(--line-soft);
-}
-.readout::before {
-  content: '';
-  position: absolute;
-  top: 0.875rem;
-  left: 1.5rem;
-  right: 1.5rem;
-  height: 9px;
-  border-left: 1px solid var(--line-strong);
-  border-right: 1px solid var(--line-strong);
-  background: linear-gradient(var(--line-strong), var(--line-strong)) center / 100% 1px no-repeat;
-}
-.readout dt {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-.readout dd {
-  margin: 0.25rem 0 0;
-  display: flex;
-  flex-direction: column;
-}
-.readout-value {
-  font-size: clamp(1.625rem, 1.2rem + 1.1vw, 2.25rem);
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-}
-.readout-note {
-  margin-top: 0.125rem;
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-}
-.readout.is-text .readout-value {
-  font-family: var(--font-display);
-  font-size: clamp(1.375rem, 1.1rem + 0.7vw, 1.75rem);
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-.readout.is-evidence::before {
-  border-color: var(--accent);
-  background-image: linear-gradient(var(--accent), var(--accent));
-}
-.readout.is-evidence .readout-value {
-  color: var(--accent);
-}
-@media (max-width: 860px) {
-  .readout {
-    flex-basis: 9rem;
-    padding: 1.5rem 1rem 1rem;
-  }
-  .readout::before {
-    left: 1rem;
-    right: 1rem;
-  }
 }
 
 /* ---------------------------------------------------------------- ranked bars */
@@ -191,7 +46,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
-  /* in a taller panel the rows spread out instead of leaving a gap underneath */
+  /* in a taller card the rows spread out instead of leaving a gap underneath */
   flex: 1 1 auto;
   justify-content: space-between;
 }
@@ -199,41 +54,38 @@
   display: grid;
   grid-template-columns: minmax(5.5rem, 8rem) minmax(0, 1fr) minmax(3.5rem, auto);
   align-items: center;
-  gap: 0.75rem;
-  font-size: 0.875rem;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
 }
 .bar-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--ink);
 }
 .bar-track {
   height: 0.625rem;
-  background: var(--bg-inset);
-  border-radius: 2px;
+  border-radius: 0 4px 4px 0;
+  background: var(--data-track);
 }
 .bar-fill {
   display: block;
   height: 100%;
-  background: var(--data-rest);
   border-radius: 0 4px 4px 0;
+  background: var(--data-rest);
 }
 .bar-value {
   text-align: right;
   color: var(--ink-2);
-  font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
 }
 /* emphasis is a brighter step of the data hue, not another color */
 .bar-list .is-highlight .bar-fill {
   background: var(--data);
 }
-.bar-list .is-highlight .bar-value,
-.bar-list .is-highlight .bar-label {
-  color: var(--text-primary);
-}
-.bar-list .is-muted .bar-fill {
-  background: var(--data-missing);
+.bar-list .is-highlight .bar-value {
+  color: var(--ink);
+  font-weight: 600;
 }
 
 /* ---------------------------------------------------------------- states */
@@ -243,10 +95,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  padding: 1.5rem;
-  color: var(--text-secondary);
+  gap: var(--space-3);
+  padding: var(--space-5);
+  color: var(--ink-2);
   text-align: center;
+}
+.state-error p {
+  max-width: 44ch;
 }
 /* loading: a quiet block the size of what is coming, so nothing jumps when the data arrives.
    The words are there for screen readers only. */
@@ -271,14 +126,17 @@
     background: rgb(255 255 255 / 0.05);
   }
 }
+/* nothing to show yet: an invitation, drawn as an empty (dashed) card */
 .state-empty {
   align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  border: 1px dashed var(--edge-control);
+  border-radius: var(--radius-card);
+  background: var(--glass-card);
   text-align: left;
-  padding: 2rem;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--radius-panel);
-  background: var(--bg-elevated);
 }
 .state-empty h2 {
-  color: var(--text-primary);
+  color: var(--ink);
+  font-size: var(--text-lg);
 }

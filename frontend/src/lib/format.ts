@@ -22,6 +22,8 @@ export function formatters(lang: Lang): Formatters {
     maximumFractionDigits: 0,
     // es-ES writes "19.411 US$" by default; "$" reads better for a US dataset
     currencyDisplay: 'narrowSymbol',
+    // es-ES leaves four-digit amounts ungrouped ("7990 $") next to grouped ones ("19.411 $")
+    useGrouping: true,
   });
   const compact = new Intl.NumberFormat(locale, {
     style: 'currency',

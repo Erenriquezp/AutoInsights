@@ -1,4 +1,5 @@
 import { Icon } from '../components/Icon';
+import { Card } from '../components/ui';
 import { useI18n } from '../i18n/context';
 import './pages.css';
 
@@ -13,33 +14,47 @@ export default function AboutPage() {
     { href: 'https://erenriquezp-portfolio.vercel.app', label: t.about.portfolio },
   ];
   return (
-    <article className="panel about">
-      <h2 className="about-title">{t.about.title}</h2>
-      <p className="about-lead">{t.about.body}</p>
+    <div className="about">
+      <Card title={t.about.title}>
+        <p className="about-lead">{t.about.body}</p>
+      </Card>
 
-      <h3>{t.about.pipelineTitle}</h3>
-      <ol className="about-steps">
-        {t.about.steps.map((step) => (
-          <li key={step}>{step}</li>
-        ))}
-      </ol>
+      {/* the pipeline is a sequence, so its steps are numbered and read left to right */}
+      <Card title={t.about.pipelineTitle}>
+        <ol className="pipeline">
+          {t.about.steps.map((step, i) => (
+            <li key={step}>
+              <span className="pipeline-step" aria-hidden="true">
+                {i + 1}
+              </span>
+              <h3>{t.about.stepTitles[i]}</h3>
+              <p className="pipeline-figure">{t.about.stepFigures[i]}</p>
+              <p>{step}</p>
+            </li>
+          ))}
+        </ol>
+      </Card>
 
-      <h3>{t.about.askTitle}</h3>
-      <p>{t.about.askBody}</p>
+      <div className="about-pair">
+        <Card title={t.about.askTitle}>
+          <p>{t.about.askBody}</p>
+        </Card>
+        <Card title={t.about.sourceTitle}>
+          <p>{t.about.source}</p>
+          <ul className="about-links">
+            {links.map((link) => (
+              <li key={link.href}>
+                <a href={link.href} target="_blank" rel="noreferrer">
+                  {link.label}
+                  <Icon name="external" size={16} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
 
-      <h3>{t.about.sourceTitle}</h3>
-      <p>{t.about.source}</p>
-      <ul className="about-links">
-        {links.map((link) => (
-          <li key={link.href}>
-            <a href={link.href} target="_blank" rel="noreferrer">
-              {link.label}
-              <Icon name="external" size={16} />
-            </a>
-          </li>
-        ))}
-      </ul>
       <p className="about-author">{t.about.author}</p>
-    </article>
+    </div>
   );
 }

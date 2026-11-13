@@ -14,6 +14,8 @@ describe('numbers', () => {
   it('formats US dollars without cents', () => {
     expect(formatters('en').money(19411.12)).toBe('$19,411');
     expect(formatters('es').money(19411.12)).toMatch(/^19\.411\s\$$/);
+    // four digits are grouped too, like the plain numbers next to them
+    expect(formatters('es').money(7990)).toMatch(/^7\.990\s\$$/);
   });
 
   it('formats compact amounts', () => {

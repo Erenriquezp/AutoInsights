@@ -1,6 +1,6 @@
-/* Design tokens: "technical drawing", adapted from the author's portfolio identity.
-   The single amber accent is reserved for ACTION (primary buttons, the active page) and
-   EVIDENCE (the data point a chart is about, the answer). Data series are graphite. */
+/* Design tokens: "night cockpit". Smoked glass over blurred street light.
+   Two jobs, two hues: amber is ACTION and SELECTION (the main button, the current page, the
+   chosen data point); cyan is DATA. */
 
 @font-face {
   font-family: "Clash Display";
@@ -27,35 +27,13 @@
 :root {
   color-scheme: dark;
 
-  /* surfaces */
-  --bg-base: #0e1116;
-  --bg-elevated: #151a21;
-  --bg-inset: #10141a;
-  --line-grid: rgba(255, 255, 255, 0.05);
-  --line-soft: #252c35;
-  --line-strong: #3a414c;
-
-  /* text (AA on --bg-base and --bg-elevated) */
-  --text-primary: #eceae4;
-  --text-secondary: #9aa0a8;
-
-  /* accent: action + evidence only */
+  /* amber: action and selection only */
   --accent: #ef9f27;
   --accent-soft: #fac775;
   --accent-ink: #0e1116;
 
-  /* data: graphite series, light for emphasis on dark (>= 3:1 against panels) */
-  --data-base: #6b7683;
-  --data-muted: #3f4752;
-  --data-light: #c3c8ce;
-
-  /* state */
-  --success: #4ade80;
+  /* something went wrong */
   --danger: #f87171;
-
-  /* shape */
-  --radius-panel: 0.75rem;
-  --radius-control: 0.375rem;
 
   /* type */
   --font-display: "Clash Display", "General Sans", ui-sans-serif, system-ui, sans-serif;
@@ -71,10 +49,6 @@
   /* motion */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --dur-micro: 175ms;
-
-  /* ---------------------------------------------------------------- "Night cockpit" system
-     Smoked glass over blurred street light. Two jobs, two hues: amber is ACTION and SELECTION,
-     cyan is DATA. Components migrate to these tokens page by page; the ones above stay until then. */
 
   /* ground and ambient light (see ambient.css) */
   --surface-0: #0a0e13;
