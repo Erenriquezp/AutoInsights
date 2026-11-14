@@ -25,3 +25,21 @@ variable "environment" {
     error_message = "environment must be prod or staging."
   }
 }
+
+variable "api_package_path" {
+  description = "Lambda zip built by `python -m serverless.build` in backend/."
+  type        = string
+  default     = "../../backend/build/lambda/api.zip"
+}
+
+variable "api_reserved_concurrency" {
+  description = "Concurrent executions reserved for (and capping) the API; -1 leaves it unreserved. Check the account's concurrency quota first: AWS keeps 10 unreserved."
+  type        = number
+  default     = -1
+}
+
+variable "api_environment" {
+  description = "Extra API settings (see .env.example), e.g. ASK_PER_DAY. Never put API keys here: they go to SSM."
+  type        = map(string)
+  default     = {}
+}
