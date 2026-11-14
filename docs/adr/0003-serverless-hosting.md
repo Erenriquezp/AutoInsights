@@ -41,13 +41,23 @@ allowances, not on credits.
 - DuckDB plus dependencies must fit the Lambda zip limit (250 MB unzipped); a container image is the fallback.
 - A full `terraform destroy` removes everything, so the demo can be taken down at any time.
 
+## Settled while writing the Terraform (2026-11-14)
+
+- **Package:** a zip for `python3.13` on **arm64**, built locally and tested in the official
+  Lambda runtime image: 29 MB zipped, 80 MB unpacked, under the 50 MB direct-upload limit.
+  A container image is not needed, and it would need ECR, whose storage is not always-free.
+- **Reserved concurrency:** a variable, unreserved by default, set once the account's quota is
+  known (accounts with a low quota cannot reserve any).
+- **Function URL access:** CloudFront signs requests with origin access control, so the browser
+  sends the SHA-256 of each request body (`x-amz-content-sha256`).
+- **Free allowances:** CloudFront (1 TB, 10M requests, 2M function invocations per month) and
+  Lambda (1M requests, 400,000 GB-seconds) checked; S3 has no always-free storage after the
+  first year, which costs a fraction of a cent for a few MB.
+
 ## Deferred to the AWS bootstrap
 
 Settled when the account is reviewed, before any resource is created:
 
-
 - Account plan: an existing account, or a new one that moves to the Paid plan before the 6 months end.
 - AWS region.
-- Whether the account's concurrency quota allows reserved concurrency (new accounts can start with a low limit).
-- Zip package or container image for the Lambda.
-- Confirm current always-free figures for CloudFront and S3 on the official AWS pricing pages before deploying.
+- The account's Lambda concurrency quota (sets the reserved concurrency above).

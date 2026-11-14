@@ -86,6 +86,10 @@ sends. Locally the header is unset and the socket address is used.
 - The UI tells visitors that questions are sent to a third-party model and to leave out
   personal data (free-tier terms may let the provider use prompts).
 - Error responses never include stack traces or internal details.
+- In the cloud the bucket and the API answer only CloudFront (origin access control), every
+  response carries a same-origin content security policy and the usual security headers, and
+  the API keys live in SSM Parameter Store, outside the Lambda configuration and the Terraform
+  state ([infra/README.md](../infra/README.md)).
 - No cookies, sessions or user data.
 
 Report vulnerabilities as described in [SECURITY.md](../SECURITY.md).
