@@ -64,7 +64,7 @@ it is interrupted.
 | **LLM07 System prompt leakage** | A visitor extracts the prompt | The prompt holds no secrets, only the public schema and rules, so leaking it does no harm |
 | **LLM08 Vector and embedding weaknesses** | — | Not applicable: no retrieval or embeddings |
 | **LLM09 Misinformation** | A wrong query gives a confident wrong answer | The SQL is always shown next to the result. Accuracy is measured with a 30-question evaluation set |
-| **LLM10 Unbounded consumption** | Floods exhaust the free LLM tier or the API | Questions limited to 300 characters, results to 100 rows, queries to 3 seconds. At most 6 questions per visitor per minute and 500 per day in total (429 with `Retry-After`), and a cap on the model's output tokens. When Groq's free tier is saturated, Gemini answers instead |
+| **LLM10 Unbounded consumption** | Floods exhaust the free LLM tier or the API | Questions limited to 300 characters, results to 100 rows, queries to 3 seconds. At most 6 questions per visitor per minute and 500 per day (429 with `Retry-After`), counted per API instance: on Lambda the real ceiling is 500 times the reserved concurrency, which caps the instances. A cap on the model's output tokens, and the free tiers' own limits (they throttle, they never bill). When Groq's free tier is saturated, Gemini answers instead |
 
 ## Logging
 

@@ -88,3 +88,14 @@ def test_the_handler_passes_the_request_body():
 
     # Too short: rejected by validation, which proves the JSON body reached FastAPI
     assert response["statusCode"] == 422
+
+
+def test_a_placeholder_key_is_reported_by_name_only(ssm, caplog):
+    put(ssm, "/app/groq", PLACEHOLDER)
+    env = {"GROQ_API_KEY_PARAM": "/app/groq"}
+
+    with caplog.at_level("WARNING"):
+        load_ssm_secrets(env)
+
+    assert "GROQ_API_KEY" in caplog.text and "/app/groq" in caplog.text
+    assert PLACEHOLDER not in caplog.text

@@ -6,8 +6,11 @@ where `ask.providers.get_provider` reads them, so the keys never appear in the L
 configuration or in the Terraform state. Locally no `*_PARAM` is set and nothing happens.
 """
 
+import logging
 from collections.abc import Callable, MutableMapping
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 SECRET_NAMES = ("GROQ_API_KEY", "GEMINI_API_KEY")
 # Value Terraform writes when it creates a parameter; the owner replaces it with the real key
@@ -41,7 +44,10 @@ def load_ssm_secrets(
 
     loaded = []
     for name, param in params.items():
-        if values[param] != PLACEHOLDER:
-            env[name] = values[param]
-            loaded.append(name)
+        if values[param] == PLACEHOLDER:
+            # Names only, never values: explains in the logs why the demo answers offline
+            logger.warning("%s is not set yet: put the key in SSM parameter %s", name, param)
+            continue
+        env[name] = values[param]
+        loaded.append(name)
     return loaded

@@ -1,7 +1,8 @@
 """Request limits for "Ask the data", so the free LLM tiers are not exhausted by one visitor.
 
-In memory and per process: on Lambda each warm instance keeps its own counters, which is fine
-together with the function's small concurrency and API-side throttling (ADR-0003).
+In memory and per process: on Lambda each instance keeps its own counters, so the daily total
+holds per instance. Reserved concurrency on the function caps the number of instances, and with
+it the real total (limit x instances); the providers' own free-tier limits bound the rest.
 """
 
 import threading
