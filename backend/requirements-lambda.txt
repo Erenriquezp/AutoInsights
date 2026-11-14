@@ -1,0 +1,4 @@
+# What the Lambda package installs: the API plus the adapter from Lambda events to ASGI.
+# boto3 is not listed: the Lambda Python runtime provides it (used only to read SSM at cold start).
+-r requirements.txt
+mangum==0.22.0

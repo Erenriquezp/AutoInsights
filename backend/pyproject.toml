@@ -19,7 +19,8 @@ select = [
 [tool.ruff.lint.isort]
 # Flat modules of the API (.) and of the Spark ETL (spark/jobs)
 known-first-party = [
-    "ask", "config", "evaluation", "main", "repository", "services",
+    "ask", "cloud_secrets", "config", "evaluation", "lambda_handler", "main", "repository",
+    "serverless", "services",
     "etl_job", "normalize", "transforms", "gold_fixtures",
 ]
 
