@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Static checks for the Terraform code: fmt, validate, tflint, trivy. They run in pinned Docker
-# images, get no AWS credentials and make no AWS calls, so they are free and safe to run anywhere.
+# Checks for the Terraform code: fmt, validate, offline tests (mocked AWS provider), tflint,
+# trivy. They run in pinned Docker images, get no AWS credentials and make no AWS calls, so they
+# are free and safe to run anywhere.
 #
 #   bash infra/check.sh        # from the repo root (Git Bash, Linux, macOS, CI)
 set -euo pipefail
@@ -20,6 +21,9 @@ for stack in "${STACKS[@]}"; do
   run terraform -chdir="$stack" init -backend=false -input=false -lockfile=readonly >/dev/null
   run terraform -chdir="$stack" validate
 done
+
+echo "== terraform test (app, mocked AWS provider)"
+run terraform -chdir=app test
 
 echo "== tflint"
 run tflint --init --config=/infra/.tflint.hcl >/dev/null

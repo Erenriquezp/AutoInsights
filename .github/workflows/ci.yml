@@ -96,7 +96,7 @@ jobs:
         run: docker run --rm autoinsights-spark-tests:ci
 
   infra:
-    name: Infrastructure (fmt, validate, tflint, trivy)
+    name: Infrastructure (fmt, validate, tests, tflint, trivy)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

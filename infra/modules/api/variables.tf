@@ -46,4 +46,10 @@ variable "environment" {
   description = "Extra environment variables for the API (see .env.example); they override the defaults set here."
   type        = map(string)
   default     = {}
+
+  # Lambda environment variables are visible in the console and stored in the Terraform state
+  validation {
+    condition     = alltrue([for name in keys(var.environment) : !endswith(upper(name), "_API_KEY")])
+    error_message = "API keys go to SSM Parameter Store (see ssm_parameter_names), never in environment."
+  }
 }
