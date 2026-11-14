@@ -310,16 +310,32 @@ def test_saturated_provider_is_reported_as_busy(monkeypatch, repository):
     assert response.json()["detail"]["code"] == "provider_busy"
 
 
-def test_client_address_ignores_forwarded_headers_unless_trusted(monkeypatch):
+def _request(headers: dict[str, str], host: str | None = "10.0.0.1"):
     from types import SimpleNamespace
 
-    request = SimpleNamespace(
-        client=SimpleNamespace(host="10.0.0.1"), headers={"x-forwarded-for": "1.2.3.4, 10.0.0.1"}
-    )
+    client = SimpleNamespace(host=host) if host else None
+    return SimpleNamespace(client=client, headers=headers)
 
-    assert main.client_address(request, trust_proxy=False) == "10.0.0.1"
-    assert main.client_address(request, trust_proxy=True) == "1.2.3.4"
-    assert (
-        main.client_address(SimpleNamespace(client=None, headers={}), trust_proxy=False)
-        == "unknown"
-    )
+
+def test_client_address_uses_the_socket_peer_without_a_configured_header():
+    # Without a configured header, nothing the visitor sends can pick the limit bucket
+    request = _request({"x-forwarded-for": "1.2.3.4", "cloudfront-viewer-address": "5.6.7.8:443"})
+
+    assert main.client_address(request, header="") == "10.0.0.1"
+    assert main.client_address(_request({}, host=None), header="") == "unknown"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [("198.51.100.10:46532", "198.51.100.10"), ("2001:db8::1:443", "2001:db8::1")],
+)
+def test_client_address_reads_the_viewer_address_cloudfront_sets(value, expected):
+    request = _request({"cloudfront-viewer-address": value})
+
+    assert main.client_address(request, header="cloudfront-viewer-address") == expected
+
+
+def test_client_address_falls_back_to_the_peer_when_the_header_is_missing():
+    request = _request({"x-forwarded-for": "1.2.3.4"})
+
+    assert main.client_address(request, header="cloudfront-viewer-address") == "10.0.0.1"

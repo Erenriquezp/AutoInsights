@@ -20,6 +20,14 @@ def test_health_reports_version(client: TestClient) -> None:
     assert response.json() == {"status": "healthy", "version": main.settings.APP_VERSION}
 
 
+def test_api_health_is_served_under_the_api_prefix(client: TestClient) -> None:
+    # CloudFront routes only /api/* to the Lambda, so the public health check lives there
+    response = client.get("/api/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "healthy", "version": main.settings.APP_VERSION}
+
+
 def test_value_error_returns_400_json(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     def boom() -> None:
         raise ValueError("Unknown collection 'nope'")

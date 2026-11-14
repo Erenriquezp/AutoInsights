@@ -37,8 +37,9 @@ class Settings:
     QUESTION_MAX_LENGTH: int = 300
     ASK_PER_MINUTE: int = int(os.getenv("ASK_PER_MINUTE", "6"))  # per client address
     ASK_PER_DAY: int = int(os.getenv("ASK_PER_DAY", "500"))  # all clients, per UTC day
-    # Behind CloudFront the client address comes from X-Forwarded-For; locally it must not
-    TRUST_PROXY_HEADERS: bool = os.getenv("TRUST_PROXY_HEADERS", "false").lower() == "true"
+    # Header with the visitor's address, set by a trusted proxy. Behind CloudFront:
+    # cloudfront-viewer-address. Empty (local runs): the socket peer address is used.
+    CLIENT_IP_HEADER: str = os.getenv("CLIENT_IP_HEADER", "").strip().lower()
 
 
 settings = Settings()

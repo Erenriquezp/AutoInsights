@@ -74,9 +74,11 @@ its length, the input and output tokens and the latency. The question text itsel
 logged. API keys live in `.env` (git-ignored) locally and in SSM Parameter Store in the cloud;
 they are sent to the providers in headers, never in URLs, and never logged.
 
-The client address used for the per-visitor limit comes from `X-Forwarded-For` only when
-`TRUST_PROXY_HEADERS=true` (behind CloudFront); otherwise a visitor could choose their own
-limit bucket.
+The client address used for the per-visitor limit comes from the header named by
+`CLIENT_IP_HEADER`. In the cloud it is `cloudfront-viewer-address`, which CloudFront sets from the
+connection; visitors cannot bypass CloudFront because the Function URL only accepts requests that
+CloudFront signs. `X-Forwarded-For` is never used, since its first entry is whatever the visitor
+sends. Locally the header is unset and the socket address is used.
 
 ## Web application basics
 

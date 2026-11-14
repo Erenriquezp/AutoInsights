@@ -41,6 +41,7 @@ def read_root() -> dict[str, str]:
 
 
 @app.get("/health", tags=["Health"])
+@app.get("/api/health", tags=["Health"])  # behind CloudFront only /api/* reaches the API
 def health_check() -> dict[str, str]:
     return {"status": "healthy", "version": settings.APP_VERSION}
 
@@ -164,12 +165,17 @@ def get_rate_limiter() -> RateLimiter:
     return RateLimiter(settings.ASK_PER_MINUTE, settings.ASK_PER_DAY)
 
 
-def client_address(request: Request, trust_proxy: bool) -> str:
-    """The visitor's address for rate limiting. X-Forwarded-For is only trusted behind a
-    known proxy (CloudFront); otherwise anyone could pick their own limit bucket."""
-    forwarded = request.headers.get("x-forwarded-for", "")
-    if trust_proxy and forwarded:
-        return forwarded.split(",")[0].strip()
+def client_address(request: Request, header: str) -> str:
+    """The visitor's address for rate limiting.
+
+    `header` names a header set by a trusted proxy: CloudFront's `CloudFront-Viewer-Address`
+    ("ip:port"), which visitors cannot set because the Function URL only accepts requests
+    signed by CloudFront. X-Forwarded-For is never used: its first entry comes from the visitor.
+    Without a header (local runs) the socket peer is used.
+    """
+    value = request.headers.get(header, "") if header else ""
+    if value:
+        return value.rsplit(":", 1)[0]  # drop the port; IPv6 addresses keep their colons
     return request.client.host if request.client else "unknown"
 
 
@@ -177,7 +183,7 @@ def client_address(request: Request, trust_proxy: bool) -> str:
 def ask_the_data(body: AskRequest, request: Request):
     """Answer a question in plain English with validated, visible SQL over the gold tables."""
     try:
-        get_rate_limiter().check(client_address(request, settings.TRUST_PROXY_HEADERS))
+        get_rate_limiter().check(client_address(request, settings.CLIENT_IP_HEADER))
     except RateLimited as error:
         return JSONResponse(
             status_code=429,
