@@ -64,3 +64,19 @@ def test_cors_allows_only_configured_origins(client: TestClient) -> None:
     assert ok.headers.get("access-control-allow-origin") == allowed
     assert "access-control-allow-origin" not in denied.headers
     assert "access-control-allow-credentials" not in ok.headers
+
+
+def test_cors_preflight_allows_the_body_hash_header(client: TestClient) -> None:
+    # The dashboard sends x-amz-content-sha256 on POST (CloudFront needs it); in the dev stack
+    # the UI is on another origin, so the browser asks first and must be allowed
+    response = client.options(
+        "/api/ask",
+        headers={
+            "Origin": main.settings.CORS_ORIGINS[0],
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type,x-amz-content-sha256",
+        },
+    )
+
+    assert response.status_code == 200
+    assert "x-amz-content-sha256" in response.headers["access-control-allow-headers"].lower()

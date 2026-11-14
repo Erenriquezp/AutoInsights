@@ -30,7 +30,8 @@ app.add_middleware(
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=False,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    # x-amz-content-sha256: body hash the UI sends on POST for CloudFront's request signing
+    allow_headers=["Content-Type", "x-amz-content-sha256"],
 )
 
 
