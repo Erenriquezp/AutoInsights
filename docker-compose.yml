@@ -5,6 +5,7 @@
 #   docker compose --profile prod up -d --build   # adds the production build on :4173
 #   docker compose run --rm spark-tests           # ETL tests inside the Spark image
 #   bash infra/check.sh                           # Terraform checks (terraform, tflint, trivy)
+#   docker compose --profile lambda up -d         # the Lambda package in the Lambda runtime (:9000)
 #
 # Ports are bound to 127.0.0.1 so nothing is exposed to the local network.
 # Optional overrides go in .env (see .env.example).
@@ -92,6 +93,28 @@ services:
     networks:
       - bigdata_net
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # The built Lambda package (python -m serverless.build in backend/) in the official Lambda
+  # runtime image, arm64 like the deployed function. Smoke test: python -m serverless.smoke
+  lambda-api:
+    profiles: ["lambda"]
+    image: public.ecr.aws/lambda/python:3.13-arm64@sha256:94dbd92894b891ab993ca3ddb1f4bc6eed61e277674ade3161766e4e16396415
+    platform: linux/arm64
+    container_name: autoinsights_lambda
+    ports:
+      - "127.0.0.1:9000:8080" # Runtime Interface Emulator invoke endpoint
+    volumes:
+      - ./backend/build/lambda/package:/var/task:ro
+    environment: # the same settings Terraform gives the function (no API keys: offline demo)
+      - AWS_LAMBDA_FUNCTION_MEMORY_SIZE=1024
+      # 15 s in the cloud; arm64 is emulated here (qemu), so the cold start takes ~20 s
+      # instead of ~1 s natively
+      - AWS_LAMBDA_FUNCTION_TIMEOUT=300
+      - HOME=/tmp
+      - CORS_ORIGINS=
+      - CLIENT_IP_HEADER=cloudfront-viewer-address
+      - LLM_PROVIDER=fallback
+    command: ["lambda_handler.handler"]
 
   # ---------------------------------------------------------------- dashboard
   frontend:

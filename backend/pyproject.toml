@@ -37,7 +37,8 @@ addopts = "-ra"
 
 [tool.coverage.run]
 source = ["."]
-omit = ["tests/*", ".venv/*", "notebooks/*"]
+# serverless/smoke.py runs against the Lambda runtime container, not in the unit tests
+omit = ["tests/*", ".venv/*", "notebooks/*", "serverless/smoke.py"]
 branch = true
 
 [tool.coverage.report]

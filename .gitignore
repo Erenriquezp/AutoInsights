@@ -39,6 +39,7 @@ crash.log
 logs/
 *.log
 dist/
+backend/build/
 
 # Private: planning, progress state and AI assistant context (kept locally, never published)
 .planning/
