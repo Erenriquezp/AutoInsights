@@ -47,6 +47,23 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
+/** Hex SHA-256 of the UTF-8 bytes of `text`. */
+export async function sha256Hex(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/** POST a JSON body. In the cloud CloudFront signs requests to the API (origin access control),
+ * and for a request with a body it needs the body's SHA-256 from the client. */
+async function postJson<T>(path: string, payload: unknown): Promise<T> {
+  const body = JSON.stringify(payload);
+  return request<T>(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-amz-content-sha256': await sha256Hex(body) },
+    body,
+  });
+}
+
 const query = (params: Record<string, string>) => new URLSearchParams(params).toString();
 
 export const api = {
@@ -64,10 +81,5 @@ export const api = {
   mileage: (brand: string, model: string) =>
     request<MileagePoint[]>(`/vehicles/mileage?${query({ brand, model })}`),
   askExamples: () => request<string[]>('/ask/examples'),
-  ask: (question: string) =>
-    request<AskAnswer>('/ask', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question }),
-    }),
+  ask: (question: string) => postJson<AskAnswer>('/ask', { question }),
 };
