@@ -12,8 +12,9 @@ locals {
 
   environment = merge(
     {
+      # No CORS_ORIGINS: behind CloudFront the dashboard is same-origin, and the Origin header
+      # is not forwarded to the API, so CORS never applies
       HOME             = "/tmp" # the only writable directory on Lambda
-      CORS_ORIGINS     = ""     # same origin behind CloudFront: no cross-origin callers
       CLIENT_IP_HEADER = "cloudfront-viewer-address"
       LLM_PROVIDER     = "fallback"
     },

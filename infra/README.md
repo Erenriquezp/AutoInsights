@@ -93,9 +93,11 @@ Nothing below is automated: each step is run by hand and its `plan` is read befo
    `aws configure sso` and `aws sso login`. No long-lived access keys on disk.
 3. Check the account's plan (Free or Paid) and its creation date; the design relies only on
    always-free allowances, never on credits.
-4. Check the Lambda concurrency quota (Service Quotas). With 1,000 or more, set
-   `api_reserved_concurrency` (for example 5) to cap the API; with the low quota of some new
-   accounts, AWS refuses any reservation, so leave it at -1.
+4. Check the Lambda concurrency quota (Service Quotas). The API's question limits are counted
+   per instance, so reserved concurrency is what caps the real total. With a quota of 1,000 or
+   more, set `api_reserved_concurrency` (for example 5: at most 5 x 500 questions a day). With
+   the low quota of some new accounts AWS refuses any reservation: leave it at -1 (the free
+   tiers then throttle instead) and request a quota increase, which is free.
 
 ### 2. Bootstrap (state bucket and budget)
 
@@ -131,7 +133,12 @@ read -rs KEY && aws ssm put-parameter --name /autoinsights-prod/groq-api-key \
   --type SecureString --value "$KEY" --overwrite && unset KEY
 ```
 
-Running instances read the keys at cold start, so new values apply as instances are replaced.
+Right after the first apply, while the placeholders are still in place, confirm that no
+parameter value reached the state: `terraform state pull | grep -c not-set` must print 0.
+
+Running instances read the keys at cold start and warm ones can live for hours. A new key is
+used by new instances only, or by all of them after the next deploy of the package. When
+a parameter holds the placeholder, the API logs a warning that names it at cold start.
 
 ### 4. Dashboard upload
 

@@ -114,6 +114,11 @@ run "api_runtime_settings" {
   }
 
   assert {
+    condition     = alltrue([for value in values(aws_lambda_function.api.environment[0].variables) : value != ""])
+    error_message = "Leave a setting out instead of setting it empty (Lambda may reject empty values)."
+  }
+
+  assert {
     condition = alltrue([
       for name in keys(aws_lambda_function.api.environment[0].variables) : !endswith(name, "_API_KEY")
     ])

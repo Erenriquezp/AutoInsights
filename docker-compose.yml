@@ -111,7 +111,6 @@ services:
       # instead of ~1 s natively
       - AWS_LAMBDA_FUNCTION_TIMEOUT=300
       - HOME=/tmp
-      - CORS_ORIGINS=
       - CLIENT_IP_HEADER=cloudfront-viewer-address
       - LLM_PROVIDER=fallback
     command: ["lambda_handler.handler"]
