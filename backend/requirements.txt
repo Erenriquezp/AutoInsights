@@ -1,5 +1,5 @@
 # Runtime dependencies of the API (pinned; updated by Dependabot)
-fastapi==0.162.2
+fastapi==0.165.0
 uvicorn==0.54.0
 duckdb==2.0.0
-sqlglot==30.30.0
+sqlglot==30.33.0
