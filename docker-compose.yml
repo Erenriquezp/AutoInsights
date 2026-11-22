@@ -165,7 +165,7 @@ services:
 
   tflint:
     profiles: ["infra"]
-    image: ghcr.io/terraform-linters/tflint:v0.65.0@sha256:2788f4d4fc663c0e953b011b01bf443fe5bfce7587ee916e588e6057b85d6359
+    image: ghcr.io/terraform-linters/tflint:v0.66.0@sha256:65b9944a9274c4989492c1d79998c2801664bf8a55fddb4bd3a9e6d73a006ddc
     working_dir: /infra
     environment:
       - TFLINT_PLUGIN_DIR=/cache/tflint
