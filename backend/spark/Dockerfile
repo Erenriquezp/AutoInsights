@@ -6,7 +6,7 @@
 #   runtime  master and workers (docker compose default)
 #   test     runtime + pytest, runs the ETL tests on the same Spark and Python versions
 
-FROM apache/spark:3.5.1-scala2.12-java17-python3-ubuntu AS runtime
+FROM apache/spark:3.5.9-scala2.12-java17-python3-ubuntu AS runtime
 
 # Root so the ETL can write the gold tables into the bind-mounted data folder on any host.
 USER root
