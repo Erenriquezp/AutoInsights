@@ -1,9 +1,9 @@
 # Development and CI tooling
 -r requirements-lambda.txt
-ruff==0.17.4
+ruff==0.17.6
 pytest==9.2.0
 pytest-cov==7.1.0
-httpx2==2.16.0
+httpx2==2.16.2
 # AWS SDK and its in-process mock, for the Lambda tests (no AWS account involved)
-boto3==1.44.3
-moto[ssm]==5.2.5
+boto3==1.44.11
+moto[ssm]==5.2.6
